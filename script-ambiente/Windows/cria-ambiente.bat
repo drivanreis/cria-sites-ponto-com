@@ -1,7 +1,15 @@
 @echo off
-echo "Construindo a imagem Docker..."
-docker build -t cria-sites-ponto-com .
-echo "Iniciando os containers com Docker Compose..."
-docker compose up -d
-echo "Processo concluído!"
+cd ..
+cd ..
+echo Criando ambiente virtual em .venv...
+python -m venv .venv
+
+echo Ativando ambiente virtual...
+call .venv\Scripts\activate
+
+echo Instalando dependências...
+pip install -r ..\requirements.txt
+
+echo Ambiente configurado com sucesso!
 pause
+exit /b 0
