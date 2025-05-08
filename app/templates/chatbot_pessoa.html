@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Entrevista Pessoal</title>
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="bg-white w-full max-w-xl p-6 rounded-xl shadow-md">
+        <h1 class="text-xl font-semibold mb-4">Vamos conhecer melhor você!</h1>
+        <p class="mb-4">Conte um pouco sobre você, o que gostaria de divulgar no seu site pessoal?</p>
+        <form hx-post="/chatbot-pessoa" hx-target="#resposta" class="space-y-4">
+            <textarea name="mensagem" class="w-full border rounded p-2" rows="5" placeholder="Digite aqui sua resposta..."></textarea>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Enviar
+            </button>
+        </form>
+        <div id="resposta" class="mt-6 text-gray-700"></div>
+    </div>
+</body>
+</html>

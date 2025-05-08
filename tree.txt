@@ -1,0 +1,34 @@
+C:.
+│   .env
+│   .gitignore
+│   cria-container.bat
+│   cria-container.sh
+│   docker-compose.yml
+│   Dockerfile
+│   LICENSE
+│   README.md
+│   requirements.txt
+│   tree.txt
+│
+└───app
+    │   main.py
+    │
+    ├───bots
+    │       bot_cria_site.py
+    │       chatbot_arte_design.py
+    │       chatbot_inicio.py
+    │       chatbot_ini_empresa.py
+    │       chatbot_ja_empresa.py
+    │       chatbot_new_empresa.py
+    │       chatbot_pessoa.py
+    │
+    ├───services
+    │       ia_engine.py
+    │       social_scraper.py
+    │
+    ├───templates
+    │       chatbot_inicio.html
+    │       chatbot_pessoa.html
+    │
+    └───utils
+            briefing_builder.py
