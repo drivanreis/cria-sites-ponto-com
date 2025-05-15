@@ -15,7 +15,7 @@ Implementar o fluxo de atendimento inicial e pós-login com botões e áudio est
 * Automação encerra após notificar administradores sobre o briefing pronto.
 
 ### Papéis
-* **EU:** O Sócio Majoritário, Desenvolvedor Full Stack, e o responsável manual por criar o roteiro de desenvolvimento e o próprio site após receber o briefing. Interage com a área administrativa para obter o briefing e inserir o roteiro/orçamento.
+* **EU:** O Sócio Majoritário, Desenvolvedor Full Stack, e o responsável manual por criar o roteiro de desenvolvimento e o (ivan) próprio site após receber o briefing. Interage com a área administrativa para obter o briefing e inserir o roteiro/orçamento.
 * **Lógica de Orquestração do Backend:** Implementada no código Python/FastAPI. Gerencia o fluxo de botões, sessões, determina qual Papel da IA entrevistar, chama APIs de IA (via Camada de Comunicação - Fase 1.5), salva histórico/briefing no DB, atualiza status, envia notificação final ao cliente e envia Email/SMS aos administradores.
 * **"Funcionários" (Papéis da IA de Entrevista/Consulta):** Modelos de IA (configurados via tabela `employees`) para agir como `chatbot-pessoa`, `chatbot-ja-empresa`, `chatbot-new-empresa`. Focam em conduzir entrevistas e coletar/estruturar informações para o briefing.
 * **`bot-cria-site`:** **NÃO é mais um agente de execução de código.** É o **estado final/transição** do briefing automatizado.
