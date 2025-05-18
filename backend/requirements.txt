@@ -1,0 +1,14 @@
+# File: backend/requirements.txt
+
+fastapi
+sqlalchemy
+alembic
+requests
+python-jose[cryptography]
+python-social-auth
+authlib
+pydantic
+uvicorn[standard]
+PyOTP
+mysql-connector-python
+python-dotenv
