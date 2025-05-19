@@ -1,0 +1,36 @@
+# File: ./docker-compose.yml
+
+services:
+  db:
+    image: mysql:8.0 # Usaremos a versão 8.0 do MySQL
+    command: --default-authentication-plugin=mysql_native_password # Necessário para compatibilidade
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123 # Defina uma senha segura para o root (apenas para desenvolvimento local!)
+      MYSQL_DATABASE: db-cria-site # Nome do banco de dados que vamos usar
+      MYSQL_USER: dev-user # Usuário para a aplicação
+      MYSQL_PASSWORD: dev123 # Senha para o usuário da aplicação
+    ports:
+      - "3306:3306" # Mapeia a porta do contêiner para a porta da sua máquina
+    volumes:
+      - db_data:/var/lib/mysql # Volume para persistir os dados do banco
+
+  backend:
+    build: ./backend # Informa ao Docker Compose para construir a imagem a partir do Dockerfile em ./backend
+    # command: uvicorn main:app --host 0.0.0.0 --port 8000 # Comando para rodar a aplicação FastAPI (placeholder)
+    volumes:
+      - ./backend/src:/app/src # Mapeia o código fonte local para dentro do contêiner (facilita desenvolvimento)
+      - ./backend/.env:/app/.env # Mapeia o arquivo .env para dentro do contêiner
+      # Certifique-se de que alembic/ e alembic.ini também estejam mapeados se precisar rodar Alembic dentro do contêiner
+      - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini      
+    ports:
+      - "8000:8000" # Mapeia a porta do backend do contêiner para a sua máquina
+    environment:
+      DATABASE_URL: mysql+mysqlconnector://dev-user:dev123@db:3306/db-cria-site
+      # Outras variáveis de ambiente serão passadas aqui ou lidas do .env mapeado
+    depends_on:
+      - db # Garante que o DB inicie antes do backend
+
+volumes:
+  db_data:

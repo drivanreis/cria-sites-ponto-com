@@ -12,3 +12,4 @@ uvicorn[standard]
 PyOTP
 mysql-connector-python
 python-dotenv
+python-decouple

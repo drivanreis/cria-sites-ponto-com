@@ -2,7 +2,7 @@
 
 from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, text
 from sqlalchemy.dialects.mysql import JSON # Usar JSON do MySQL/MariaDB
-from backend.src.models.base import Base # Importar a Base declarativa
+from ..db.database import Base # Importar a Base declarativa
 
 class User(Base):
     __tablename__ = 'users'

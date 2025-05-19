@@ -3,7 +3,7 @@
 from sqlalchemy import Column, Integer, String, TIMESTAMP, text, ForeignKey
 from sqlalchemy.dialects.mysql import JSON # Usar JSON do MySQL/MariaDB para o conteúdo e roteiro
 from sqlalchemy.orm import relationship
-from backend.src.models.base import Base # Importar a Base declarativa
+from ..db.database import Base # Importar a Base declarativa
 
 class Briefing(Base):
     __tablename__ = 'briefings'

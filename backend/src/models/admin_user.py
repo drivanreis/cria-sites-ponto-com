@@ -1,7 +1,7 @@
 # File: backend/src/models/admin_user.py
 
 from sqlalchemy import Column, Integer, String, TIMESTAMP, text
-from backend.src.models.base import Base # Importar a Base declarativa
+from ..db.database import Base # Importar a Base declarativa
 
 class AdminUser(Base):
     __tablename__ = 'admin_users'

@@ -1,7 +1,7 @@
 # File: backend/src/models/employee.py
 
 from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, text, UniqueConstraint
-from backend.src.models.base import Base # Importar a Base declarativa
+from ..db.database import Base # Importar a Base declarativa
 
 class Employee(Base): # Usando Employee pois representa os "funcionários" IA
     __tablename__ = 'employees' # Nome da tabela conforme contrato
