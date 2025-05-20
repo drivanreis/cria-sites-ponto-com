@@ -11,9 +11,6 @@ if not DATABASE_URL:
         "A variável DATABASE_URL não foi definida no arquivo .env."
     )
 
-# Configuração do SQLAlchemy
-# A conexão real será estabelecida apenas quando o engine for usado (ex: por SessionLocal ou por Alembic em run_migrations_online)
-# engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 try:
     engine = create_engine(DATABASE_URL, pool_pre_ping=True)

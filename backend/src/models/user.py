@@ -1,6 +1,6 @@
 # File: backend/src/models/user.py
 
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, text
 from sqlalchemy.dialects.mysql import JSON # Usar JSON do MySQL/MariaDB
 from ..db.database import Base # Importar a Base declarativa
 
@@ -18,8 +18,8 @@ class User(Base):
     two_factor_secret = Column(String(255), nullable=True) # Armazena o segredo para 2FA TOTP
     is_two_factor_enabled = Column(Boolean, default=False)
     status = Column(String(50), default='active') # ex: 'active', 'blocked', 'deleted'
-    creation_date = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
-    last_login = Column(TIMESTAMP, nullable=True)
+    creation_date = Column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    last_login = Column(DateTime, nullable=True)
 
     # __repr__ e outros métodos podem ser adicionados para melhor depuração se necessário
     def __repr__(self):

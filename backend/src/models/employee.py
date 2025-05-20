@@ -1,6 +1,6 @@
 # File: backend/src/models/employee.py
 
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, text, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, DateTime, text, UniqueConstraint
 from ..db.database import Base # Importar a Base declarativa
 
 class Employee(Base): # Usando Employee pois representa os "funcionários" IA
@@ -15,8 +15,8 @@ class Employee(Base): # Usando Employee pois representa os "funcionários" IA
     api_key_env_var_name = Column(String(100)) # Nome da variável de ambiente com a chave da API
     initial_pre_prompt = Column(Text) # O texto do Pré-Prompt
     context_instructions = Column(Text, nullable=True) # Instruções contextuais adicionais
-    creation_date = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
-    update_date = Column(TIMESTAMP, nullable=True)
+    creation_date = Column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    update_date = Column(DateTime, nullable=True)
 
     # Adicionar UniqueConstraint caso precise de unicidade composta no futuro, mas role_name já é unique
 

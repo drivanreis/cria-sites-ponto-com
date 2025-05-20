@@ -1,6 +1,6 @@
 # File: backend/src/models/briefing.py
 
-from sqlalchemy import Column, Integer, String, TIMESTAMP, text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, text, ForeignKey
 from sqlalchemy.dialects.mysql import JSON # Usar JSON do MySQL/MariaDB para o conteúdo e roteiro
 from sqlalchemy.orm import relationship
 from ..db.database import Base # Importar a Base declarativa
@@ -14,8 +14,8 @@ class Briefing(Base):
     content = Column(JSON) # Conteúdo estruturado do briefing gerado/editado
     status = Column(String(50), default='Em Construção') # Status (ex: 'Em Construção', 'Pronto para Revisão')
     development_roteiro = Column(JSON, nullable=True) # Roteiro/orçamento manual do administrador
-    creation_date = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
-    update_date = Column(TIMESTAMP, nullable=True) # Data da última alteração
+    creation_date = Column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    update_date = Column(DateTime, nullable=True) # Data da última alteração
     last_edited_by = Column(String(50), nullable=True) # Quem fez a última edição ('user' ou 'admin')
 
     # Define o relacionamento com a tabela users

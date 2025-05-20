@@ -13,3 +13,4 @@ PyOTP
 mysql-connector-python
 python-dotenv
 python-decouple
+pytz
