@@ -1,36 +1,63 @@
-# File: ./docker-compose.yml
+# File: docker-compose.yml
+
+version: '3.8' # Versão recomendada para usar healthchecks e depends_on avançados
 
 services:
   db:
-    image: mysql:8.0 # Usaremos a versão 8.0 do MySQL
-    command: --default-authentication-plugin=mysql_native_password # Necessário para compatibilidade
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root123 # Defina uma senha segura para o root (apenas para desenvolvimento local!)
-      MYSQL_DATABASE: db-cria-site # Nome do banco de dados que vamos usar
-      MYSQL_USER: dev-user # Usuário para a aplicação
-      MYSQL_PASSWORD: dev123 # Senha para o usuário da aplicação
+      MYSQL_ROOT_PASSWORD: root123 # ALERTA: Mude para uma senha segura em produção!
+      MYSQL_DATABASE: db-cria-site
+      MYSQL_USER: dev-user
+      MYSQL_PASSWORD: dev123
     ports:
-      - "3306:3306" # Mapeia a porta do contêiner para a porta da sua máquina
-    volumes:
-      - db_data:/var/lib/mysql # Volume para persistir os dados do banco
+      - "3306:3306"
+    # volumes:
+    #  - db_data:/var/lib/mysql # Persiste os dados do MySQL
+    networks:
+      - app_network # Conecta o serviço db à rede app_network
+    healthcheck: # Healthcheck para o serviço de banco de dados
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s # Tempo para o serviço iniciar antes de começar a testar
 
   backend:
-    build: ./backend # Informa ao Docker Compose para construir a imagem a partir do Dockerfile em ./backend
-    # command: uvicorn main:app --host 0.0.0.0 --port 8000 # Comando para rodar a aplicação FastAPI (placeholder)
+    build: ./backend # Constrói a imagem do Dockerfile na pasta ./backend
+    # Comando para iniciar a aplicação FastAPI
+    # --host 0.0.0.0: Ouve em todas as interfaces de rede
+    # --port 8000: Define a porta
+    # --reload: Reinicia o servidor automaticamente em caso de mudanças de código (ótimo para desenvolvimento)
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - ./backend/src:/app/src # Mapeia o código fonte local para dentro do contêiner (facilita desenvolvimento)
-      - ./backend/.env:/app/.env # Mapeia o arquivo .env para dentro do contêiner
-      # Certifique-se de que alembic/ e alembic.ini também estejam mapeados se precisar rodar Alembic dentro do contêiner
-      - ./backend/alembic:/app/alembic
-      - ./backend/alembic.ini:/app/alembic.ini      
+      # Mapeia toda a pasta 'backend' do host para '/app' dentro do contêiner.
+      # Isso inclui o código Python (src/), arquivos .env, Alembic, etc.
+      # Qualquer alteração nos arquivos locais será refletida instantaneamente no contêiner.
+      - ./backend:/app
     ports:
-      - "8000:8000" # Mapeia a porta do backend do contêiner para a sua máquina
+      - "8000:8000" # Mapeia a porta 8000 do contêiner para a porta 8000 na sua máquina
+    env_file:
+      - ./backend/.env # Carrega variáveis de ambiente do arquivo .env na pasta backend
     environment:
+      # Exemplo de variável de ambiente, se não estiver no .env ou se precisar sobrescrever
       DATABASE_URL: mysql+mysqlconnector://dev-user:dev123@db:3306/db-cria-site
-      # Outras variáveis de ambiente serão passadas aqui ou lidas do .env mapeado
     depends_on:
-      - db # Garante que o DB inicie antes do backend
+      db:
+        condition: service_healthy # Garante que o backend só inicie quando o DB estiver "saudável"
+    networks:
+      - app_network # Conecta o serviço backend à rede app_network
+    healthcheck: # Healthcheck para o serviço FastAPI
+      test: ["CMD", "curl", "-f", "http://localhost:8000"] # Testa se o endpoint "/" responde
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
-  db_data:
+  db_data: # Define um volume nomeado para persistir os dados do MySQL
+
+networks:
+  app_network:
+    driver: bridge # Define uma rede bridge para comunicação entre os serviços

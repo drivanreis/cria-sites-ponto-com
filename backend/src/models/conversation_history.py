@@ -11,14 +11,13 @@ class ConversationHistory(Base):
     __tablename__ = 'conversation_history'
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    briefing_id = Column(Integer, ForeignKey('briefings.id')) # Vincula a mensagem ao briefing
-    speaker_type = Column(String(10)) # Quem falou ('user' ou 'bot')
-    speaker_role_name = Column(String(100), nullable=True) # Nome do papel da IA (se for 'bot')
+    briefing_id = Column(Integer, ForeignKey('briefings.id'), unique=True, nullable=False) # Vincula a mensagem ao briefing
+    speaker_type = Column(String(30)) # Quem falou ('João' ou 'Entrevistador Pesoal')
     timestamp = Column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     text = Column(Text) # O conteúdo da mensagem
 
     
-    briefing = relationship("src.models.briefing.Briefing", backref="conversation_history")
+    briefing = relationship("Briefing", back_populates="conversation_history")
 
 
     def __repr__(self):

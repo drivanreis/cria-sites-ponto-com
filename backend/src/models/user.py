@@ -2,6 +2,7 @@
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, text
 from sqlalchemy.dialects.mysql import JSON # Usar JSON do MySQL/MariaDB
+from sqlalchemy.orm import relationship
 from ..db.database import Base # Importar a Base declarativa
 
 class User(Base):
@@ -20,6 +21,8 @@ class User(Base):
     status = Column(String(50), default='active') # ex: 'active', 'blocked', 'deleted'
     creation_date = Column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     last_login = Column(DateTime, nullable=True)
+
+    briefings = relationship("Briefing", back_populates="user")
 
     # __repr__ e outros métodos podem ser adicionados para melhor depuração se necessário
     def __repr__(self):
