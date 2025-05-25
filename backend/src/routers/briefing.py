@@ -8,13 +8,19 @@ from src.cruds import briefing as crud_briefing
 from src.schemas.briefing import BriefingCreate, BriefingUpdate, BriefingInDB
 from src.db.database import get_db
 
-router = APIRouter()
+# CORRIGIDO: Adicionado prefix e tags para organização da API
+router = APIRouter(
+    prefix="/briefings",
+    tags=["Briefings"]
+)
 
 @router.post("/", response_model=BriefingInDB, status_code=status.HTTP_201_CREATED)
 def create_new_briefing(briefing: BriefingCreate, db: Session = Depends(get_db)):
-    # Basic check for existing briefing (e.g., by user_id and project_name)
-    # This might need more complex logic depending on business rules
-    # For now, allowing multiple briefings per user
+    # Basic check for existing briefing (e.g., by user_id and title)
+    # If you later decide to enforce unique titles per user, you'd add:
+    # db_briefing = crud_briefing.get_briefing_by_user_id_and_title(db, user_id=briefing.user_id, title=briefing.title)
+    # if db_briefing:
+    #     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Briefing with this title already exists for this user")
     return crud_briefing.create_briefing(db=db, briefing=briefing)
 
 @router.get("/", response_model=List[BriefingInDB])
@@ -49,4 +55,5 @@ def delete_existing_briefing(briefing_id: int, db: Session = Depends(get_db)):
     success = crud_briefing.delete_briefing(db, briefing_id=briefing_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Briefing not found")
-    return {"message": "Briefing deleted successfully"}
+    # CORRIGIDO: Para 204 No Content, o corpo da resposta deve ser vazio.
+    return

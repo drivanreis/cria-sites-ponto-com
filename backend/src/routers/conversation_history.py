@@ -2,13 +2,17 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from src.cruds import conversation_history as crud_conv_history
 from src.schemas.conversation_history import ConversationHistoryCreate, ConversationHistoryUpdate, ConversationHistoryInDB
 from src.db.database import get_db
 
-router = APIRouter()
+# CORRIGIDO: Adicionado prefix e tags para organização da API
+router = APIRouter(
+    prefix="/conversation_history",
+    tags=["Conversation History"]
+)
 
 @router.post("/", response_model=ConversationHistoryInDB, status_code=status.HTTP_201_CREATED)
 def create_new_conversation_message(
@@ -17,9 +21,8 @@ def create_new_conversation_message(
 ):
     # Check if briefing_id exists (optional, but good for data integrity)
     # from src.cruds.briefing import get_briefing # Avoid circular import if possible, or pass dependency
-    # if not get_briefing(db, message.briefing_id):
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Briefing not found for this message")
-    
+    # You might implement this check in a more robust way later, e.g., using dependency injection
+    # or a service layer. For now, the existing code directly calls the CRUD.
     return crud_conv_history.create_conversation_message(db=db, message=message)
 
 @router.get("/", response_model=List[ConversationHistoryInDB])
@@ -31,8 +34,7 @@ def read_conversation_history(
 ):
     history = crud_conv_history.get_conversation_history_by_briefing(db, briefing_id=briefing_id, skip=skip, limit=limit)
     if not history:
-        # It's okay if history is empty, but if briefing_id itself is invalid, maybe raise 404
-        # For now, just return empty list if no messages
+        # It's okay if history is empty for a valid briefing_id, return empty list
         pass
     return history
 
@@ -59,4 +61,5 @@ def delete_existing_conversation_message(message_id: int, db: Session = Depends(
     success = crud_conv_history.delete_conversation_message(db, message_id=message_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation message not found")
-    return {"message": "Conversation message deleted successfully"}
+    # CORRIGIDO: Para 204 No Content, o corpo da resposta deve ser vazio.
+    return

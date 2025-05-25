@@ -2,24 +2,30 @@
 
 from datetime import datetime
 from pydantic import BaseModel, Field
+from typing import Optional
 
+# Esquema Base para ConversationHistory, contendo os campos comuns
+# que podem ser usados para entrada e saída.
 class ConversationHistoryBase(BaseModel):
-    briefing_id: int
-    speaker_type: str = Field(..., max_length=10) # 'user' or 'bot'
-    speaker_role_name: str | None = Field(None, max_length=100) # e.g., "AI Assistant"
-    text: str = Field(...)
+    briefing_id: int # Obrigatório, conforme model
+    speaker_type: str = Field(..., max_length=30) # Obrigatório, conforme model
+    text: str # Obrigatório, conforme model (Text é mapeado para str no Pydantic)
 
+# Esquema para criação de um novo registro de ConversationHistory
 class ConversationHistoryCreate(ConversationHistoryBase):
-    pass
+    pass # Herda todos os campos obrigatórios de ConversationHistoryBase
 
+# Esquema para atualização de um registro de ConversationHistory (todos os campos são opcionais)
 class ConversationHistoryUpdate(BaseModel):
-    speaker_type: str | None = Field(None, max_length=10)
-    speaker_role_name: str | None = Field(None, max_length=100)
-    text: str | None = Field(None)
+    briefing_id: Optional[int] = None
+    speaker_type: Optional[str] = Field(None, max_length=30)
+    text: Optional[str] = None
 
+# Esquema para representação de um registro de ConversationHistory no banco de dados (saída da API)
 class ConversationHistoryInDB(ConversationHistoryBase):
     id: int
-    timestamp: datetime # Note: This is managed by the DB's server_default
+    timestamp: datetime # Gerado automaticamente pelo banco de dados
 
     class Config:
-        orm_mode = True
+        from_attributes = True # Pydantic v2 (substitui orm_mode = True)
+        # Permite que o Pydantic leia diretamente dos objetos do SQLAlchemy (ORM)

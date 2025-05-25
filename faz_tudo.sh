@@ -2,10 +2,16 @@
 #!/bin/bash
 
 clear
-sudo rm -f backend/alembic/versions/*.py
-sudo find . -type d -name "__pycache__" -exec rm -rf {} +
+echo "Iniciando o processo de limpeza e inicialização do ambiente Docker..."
+sleep 1
+sudo ./cls_file.sh
+sleep 1
 ./limpeza_docker.sh
-sleep 10
+sleep 5
+# Redundancia:
+echo "Remoção forçada de contêineres..."
+docker system prune -a -f --volumes
+sleep 1
 docker compose up -d --build
-sleep 15
+sleep 20
 ./init_alembic.sh

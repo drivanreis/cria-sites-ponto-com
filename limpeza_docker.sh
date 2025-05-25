@@ -4,11 +4,12 @@
 echo "Iniciando a limpeza completa do Docker..."
 
 # 1. Parar e remover todos os contêineres em execução
+echo "Remover todos os contêineres em execução..."
+docker compose down --volumes
 echo "Parando e removendo todos os contêineres em execução..."
 docker ps -aq | xargs -r docker stop
 docker ps -aq | xargs -r docker rm -f
 echo "Contêineres removidos."
-
 # 2. Remover todas as imagens Docker (apenas as que não estão sendo usadas por contêineres rodando)
 # A flag -a inclui imagens não usadas
 echo "Removendo todas as imagens Docker não usadas..."

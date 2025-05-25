@@ -1,31 +1,43 @@
 # File: backend/src/schemas/employee.py
 
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
+from typing import Optional
 
+# Esquema Base para Employee, contendo os campos que são sempre retornados
+# e que podem ser a base para criação/atualização.
 class EmployeeBase(BaseModel):
-    full_name: str = Field(..., min_length=3, max_length=100)
-    email: EmailStr = Field(..., max_length=255)
-    password: str = Field(..., min_length=8, max_length=255)
-    phone_number: str = Field(..., max_length=20)
-    role: str = Field(..., max_length=50) # e.g., "Developer", "Designer", "Project Manager"
-    is_active: bool = True
+    role_name: str = Field(..., max_length=100) # Obrigatório
+    display_name: str = Field(..., max_length=100) # Obrigatório
+    ai_service_name: str = Field(..., max_length=100) # Obrigatório
+    endpoint: str = Field(..., max_length=255) # Obrigatório
+    model: str = Field(..., max_length=100) # Obrigatório
+    api_key_env_var_name: str = Field(..., max_length=100) # Obrigatório
+    initial_pre_prompt: str # Text é mapeado para str no Pydantic
+    context_instructions: Optional[str] = None # Opcional no modelo (nullable=True)
 
+# Esquema para criação de um novo Employee
 class EmployeeCreate(EmployeeBase):
-    pass
+    pass # Herda todos os campos obrigatórios de EmployeeBase
 
+# Esquema para atualização de um Employee existente (todos os campos são opcionais)
 class EmployeeUpdate(BaseModel):
-    full_name: str | None = Field(None, min_length=3, max_length=100)
-    email: EmailStr | None = Field(None, max_length=255)
-    password: str | None = Field(None, min_length=8, max_length=255)
-    phone_number: str | None = Field(None, max_length=20)
-    role: str | None = Field(None, max_length=50)
-    is_active: bool | None = None
+    role_name: Optional[str] = Field(None, max_length=100)
+    display_name: Optional[str] = Field(None, max_length=100)
+    ai_service_name: Optional[str] = Field(None, max_length=100)
+    endpoint: Optional[str] = Field(None, max_length=255)
+    model: Optional[str] = Field(None, max_length=100)
+    api_key_env_var_name: Optional[str] = Field(None, max_length=100)
+    initial_pre_prompt: Optional[str] = None
+    context_instructions: Optional[str] = None
 
+# Esquema para representação de um Employee no banco de dados (saída da API)
 class EmployeeInDB(EmployeeBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
+    # Campos que são gerados automaticamente ou gerenciados pelo backend
+    creation_date: datetime
+    update_date: Optional[datetime] = None # Opcional no modelo (nullable=True)
 
     class Config:
-        orm_mode = True
+        from_attributes = True # Pydantic v2 (substitui orm_mode = True)
+        # Permite que o Pydantic leia diretamente dos objetos do SQLAlchemy (ORM)

@@ -8,7 +8,7 @@ services:
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root123 # ALERTA: Mude para uma senha segura em produção!
+      MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: db-cria-site
       MYSQL_USER: dev-user
       MYSQL_PASSWORD: dev123
@@ -39,10 +39,15 @@ services:
       - ./backend:/app
     ports:
       - "8000:8000" # Mapeia a porta 8000 do contêiner para a porta 8000 na sua máquina
-    env_file:
-      - ./backend/.env # Carrega variáveis de ambiente do arquivo .env na pasta backend
     environment:
-      # Exemplo de variável de ambiente, se não estiver no .env ou se precisar sobrescrever
+      SECRET_KEY: chave_JWT_segura_e_longa
+      ALGORITHM: HS256
+      # >>> NOVAS VARIÁVEIS DE AMBIENTE <<<
+      ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES: "30" # Note que são strings
+      USER_ACCESS_TOKEN_EXPIRE_MINUTES: "180"
+      # ... o resto das variáveis
+      DEFAULT_ADMIN_USERNAME: "admin"
+      DEFAULT_ADMIN_PASSWORD: "P@ssword123"
       DATABASE_URL: mysql+mysqlconnector://dev-user:dev123@db:3306/db-cria-site
     depends_on:
       db:

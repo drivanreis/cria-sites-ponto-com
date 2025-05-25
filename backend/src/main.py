@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 import uvicorn
 import os
 import sys
+# >>> NOVIDADE: Adicionar import de time para o retry no DB (próximo passo) <<<
+import time
 
 # >>> Adição para CORS
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,11 +23,12 @@ if backend_root not in sys.path:
 
 # Importações após ajustar sys.path
 from src.db.database import SessionLocal, engine, Base
-from src.routers import user, admin_user, employee, briefing, conversation_history
+from src.routers import user, admin_user, employee, briefing, conversation_history, auth
+from src.cruds import admin_user as crud_admin_user
+from src.schemas.admin_user import AdminUserCreate
+from src.core.config import settings
 
-# Cria as tabelas no banco de dados, se ainda não existirem.
-Base.metadata.create_all(bind=engine)
-
+# >>> CORREÇÃO: Criar a instância 'app' AQUI, antes de qualquer uso dela <<<
 app = FastAPI(
     title="Cria Sites .com API",
     description="API para gerenciamento de usuários, briefings e histórico de conversas.",
@@ -34,12 +37,43 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# >>> Adição do Middleware CORS
+# Adiciona o middleware CORS
 app.add_middleware(
     CORSMiddleware,
     **CORS_MIDDLEWARE_SETTINGS
 )
-# <<< Fim da adição do Middleware CORS
+
+# O evento de startup deve vir DEPOIS que 'app' é definido
+@app.on_event("startup")
+async def create_default_admin_user():
+    db = SessionLocal()
+    try:
+        if settings.DEFAULT_ADMIN_USERNAME and settings.DEFAULT_ADMIN_PASSWORD:
+            print("Verificando/criando usuário admin padrão...")
+            db_admin_user = crud_admin_user.get_admin_user_by_username(db, username=settings.DEFAULT_ADMIN_USERNAME)
+            if not db_admin_user:
+                print(f"Usuário admin '{settings.DEFAULT_ADMIN_USERNAME}' não encontrado. Criando...")
+                admin_create = AdminUserCreate(
+                    username=settings.DEFAULT_ADMIN_USERNAME,
+                    password=settings.DEFAULT_ADMIN_PASSWORD,
+                    email="admin@example.com", # Email padrão
+                    full_name="Default Administrator" # Nome padrão
+                )
+                crud_admin_user.create_admin_user(db=db, admin_user=admin_create)
+                print(f"Usuário admin '{settings.DEFAULT_ADMIN_USERNAME}' criado com sucesso!")
+            else:
+                print(f"Usuário admin '{settings.DEFAULT_ADMIN_USERNAME}' já existe. Nenhuma ação necessária.")
+        else:
+            print("DEFAULT_ADMIN_USERNAME ou DEFAULT_ADMIN_PASSWORD não configurados. Não foi possível criar admin padrão.")
+    except Exception as e:
+        print(f"Erro ao verificar/criar usuário admin padrão: {e}")
+    finally:
+        db.close()
+
+
+# Cria as tabelas no banco de dados, se ainda não existirem.
+# Base.metadata.create_all(bind=engine) # Mantido comentado
+
 
 # Dependency para obter a sessão do banco de dados
 def get_db():
@@ -50,11 +84,12 @@ def get_db():
         db.close()
 
 # Incluir os routers
-app.include_router(user.router, prefix="/users", tags=["users"])
-app.include_router(admin_user.router, prefix="/admin_users", tags=["admin_users"])
-app.include_router(employee.router, prefix="/employees", tags=["employees"])
-app.include_router(briefing.router, prefix="/briefings", tags=["briefings"])
-app.include_router(conversation_history.router, prefix="/conversation_history", tags=["conversation_history"])
+app.include_router(user.router)
+app.include_router(admin_user.router)
+app.include_router(employee.router)
+app.include_router(briefing.router)
+app.include_router(conversation_history.router)
+app.include_router(auth.router)
 
 
 @app.get("/")
