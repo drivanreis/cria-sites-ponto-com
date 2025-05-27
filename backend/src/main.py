@@ -26,6 +26,7 @@ from src.db.database import SessionLocal, engine, Base
 from src.routers import user, admin_user, employee, briefing, conversation_history, auth
 from src.cruds import admin_user as crud_admin_user
 from src.schemas.admin_user import AdminUserCreate
+from src.schemas.user import UserCreate
 from src.core.config import settings
 
 # >>> CORREÇÃO: Criar a instância 'app' AQUI, antes de qualquer uso dela <<<
@@ -45,31 +46,31 @@ app.add_middleware(
 
 # O evento de startup deve vir DEPOIS que 'app' é definido
 @app.on_event("startup")
-async def create_default_admin_user():
+def create_default_admin_user_on_startup():
     db = SessionLocal()
     try:
-        if settings.DEFAULT_ADMIN_USERNAME and settings.DEFAULT_ADMIN_PASSWORD:
-            print("Verificando/criando usuário admin padrão...")
-            db_admin_user = crud_admin_user.get_admin_user_by_username(db, username=settings.DEFAULT_ADMIN_USERNAME)
-            if not db_admin_user:
-                print(f"Usuário admin '{settings.DEFAULT_ADMIN_USERNAME}' não encontrado. Criando...")
+        # Verifica se o admin padrão já existe
+        # Use o username do admin para a consulta
+        existing_admin = crud_admin_user.get_admin_user_by_username(db, settings.DEFAULT_ADMIN_USERNAME)
+
+        if not existing_admin:
+            if settings.DEFAULT_ADMIN_USERNAME and settings.DEFAULT_ADMIN_PASSWORD:
+                # Use SOMENTE os campos definidos em AdminUserCreate
                 admin_create = AdminUserCreate(
                     username=settings.DEFAULT_ADMIN_USERNAME,
                     password=settings.DEFAULT_ADMIN_PASSWORD,
-                    email="admin@example.com", # Email padrão
-                    full_name="Default Administrator" # Nome padrão
+                    # REMOVIDOS: email e full_name, pois AdminUserCreate não os define
                 )
                 crud_admin_user.create_admin_user(db=db, admin_user=admin_create)
                 print(f"Usuário admin '{settings.DEFAULT_ADMIN_USERNAME}' criado com sucesso!")
             else:
-                print(f"Usuário admin '{settings.DEFAULT_ADMIN_USERNAME}' já existe. Nenhuma ação necessária.")
+                print("DEFAULT_ADMIN_USERNAME ou DEFAULT_ADMIN_PASSWORD não configurados. Não foi possível criar admin padrão.")
         else:
-            print("DEFAULT_ADMIN_USERNAME ou DEFAULT_ADMIN_PASSWORD não configurados. Não foi possível criar admin padrão.")
+            print(f"Usuário admin '{settings.DEFAULT_ADMIN_USERNAME}' já existe. Nenhuma ação necessária.")
     except Exception as e:
         print(f"Erro ao verificar/criar usuário admin padrão: {e}")
     finally:
         db.close()
-
 
 # Cria as tabelas no banco de dados, se ainda não existirem.
 # Base.metadata.create_all(bind=engine) # Mantido comentado

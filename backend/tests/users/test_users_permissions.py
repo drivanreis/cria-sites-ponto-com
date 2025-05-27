@@ -1,38 +1,27 @@
 # File: backend/tests/users/test_users_permissions.py
 
 import pytest
-# Removido: from httpx import AsyncClient
-from fastapi.testclient import TestClient # Importação Correta para cliente síncrono
+from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from src.schemas.user import UserUpdate
 from src.models.user import User
-# Adicionado create_test_admin_user
 from tests.conftest import create_test_user, create_test_admin_user, get_admin_token, get_user_token
 
-# Teste para listar usuários como administrador
-# Removido: @pytest.mark.asyncio
-# Removido: async def
-def test_list_users_as_admin(client: TestClient, db_session_override: Session): # Tipo do cliente alterado
-    admin_password = "AdListUser123!" # Senha ajustada
-    # Criar um admin específico para este teste, se necessário, ou usar um existente via get_admin_token
-    # Se você já tem um admin padrão criado por setup (como o do conftest), pode usar as credenciais dele.
-    # Se get_admin_token já cria um, então esta linha abaixo pode ser redundante, dependendo da sua lógica em conftest.
-    # No entanto, para garantir que o admin token seja gerado para um admin 'existente' no contexto do teste:
+def test_list_users(client: TestClient, db_session_override: Session):
+    admin_password = "AdListUser123!"
     admin_user = create_test_admin_user(db_session_override, "list_users_admin", admin_password)
-    admin_token = get_admin_token(client, db_session_override, admin_user.username, admin_password) # Removido await
+    admin_token = get_admin_token(client, db_session_override, admin_user.username, admin_password)
 
     # Cria alguns usuários comuns para listar
-    create_test_user(db_session_override, "User A", "user_a_list@example.com", "ListUserA123!") # Removido await
-    create_test_user(db_session_override, "User B", "user_b_list@example.com", "ListUserB123!") # Removido await
+    create_test_user(db_session_override, "User A", "user_a_list@example.com", "ListUserA123!")
+    create_test_user(db_session_override, "User B", "user_b_list@example.com", "ListUserB123!")
 
-    response = client.get("/users/", headers={"Authorization": f"Bearer {admin_token}"}) # Removido await
+    response = client.get("/users/", headers={"Authorization": f"Bearer {admin_token}"})
 
     assert response.status_code == 200
     users_data = response.json()
     assert isinstance(users_data, list)
-    # Deveria ter pelo menos 2 usuários criados (A e B), além do admin criado
-    assert len(users_data) >= 3
-
+    assert len(users_data) == 2 
 
 # Teste para listar usuários como usuário comum (proibido)
 # Removido: @pytest.mark.asyncio
