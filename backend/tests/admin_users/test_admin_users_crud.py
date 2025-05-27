@@ -1,24 +1,27 @@
 # File: backend/tests/admin_users/test_admin_users_crud.py
 
 import pytest
-from httpx import AsyncClient
+from fastapi.testclient import TestClient 
 from sqlalchemy.orm import Session
 
-# Importe as funções auxiliares do conftest.py
 from tests.conftest import create_test_admin_user, get_admin_token
+from src.models.admin_user import AdminUser
 
 # Teste de criação de admin por outro admin
-@pytest.mark.asyncio
-async def test_create_admin_user_as_admin(client: AsyncClient, db_session_override: Session):
+def test_create_admin_user_as_admin(client: TestClient, db_session_override: Session):
     admin_password = "AdminSnh123!" # Senha ajustada
-    admin_token = await get_admin_token(client, db_session_override, "test_admin", admin_password)
-    headers = {"Authorization": f"Bearer {admin_token['access_token']}"}
+    # Garante que o admin que fará a requisição exista
+    _ = create_test_admin_user(db_session_override, "test_admin", admin_password) 
+    # Removido await
+    admin_token = get_admin_token(client, db_session_override, "test_admin", admin_password) 
+    headers = {"Authorization": f"Bearer {admin_token}"} # Usar o token diretamente
 
     new_admin_data = {
         "username": "new_admin_user",
         "password": "NewAdminPass12!" # Senha ajustada (máx 16 caracteres)
     }
-    response = await client.post(
+    # Removido await
+    response = client.post(
         "/admin_users/",
         json=new_admin_data,
         headers=headers
@@ -31,69 +34,91 @@ async def test_create_admin_user_as_admin(client: AsyncClient, db_session_overri
     assert "password_hash" not in data
 
 # Teste de listagem de admins como administrador
-@pytest.mark.asyncio
-async def test_list_admin_users_as_admin(client: AsyncClient, db_session_override: Session):
+# Removido @pytest.mark.asyncio e alterado para TestClient
+def test_list_admin_users_as_admin(client: TestClient, db_session_override: Session):
     admin_password = "ListAdmin123!" # Senha ajustada
-    admin_token = await get_admin_token(client, db_session_override, "list_admin", admin_password)
-    headers = {"Authorization": f"Bearer {admin_token['access_token']}"}
+    # Garante que o admin que fará a requisição exista
+    _ = create_test_admin_user(db_session_override, "list_admin", admin_password)
+    # Removido await
+    admin_token = get_admin_token(client, db_session_override, "list_admin", admin_password)
+    headers = {"Authorization": f"Bearer {admin_token}"}
 
-    # Crie mais um admin para garantir que haja pelo menos dois (o que logou + o criado)
-    await create_test_admin_user(db_session_override, "another_admin", "AnotherAdm12!") # Senha ajustada
+    # Crie alguns admins de teste
+    create_test_admin_user(db_session_override, "admin1", "AdminOne123!")
+    create_test_admin_user(db_session_override, "admin2", "AdminTwo123!")
 
-    response = await client.get("/admin_users/", headers=headers)
+    # Removido await
+    response = client.get("/admin_users/", headers=headers)
     assert response.status_code == 200
     data = response.json()
-    assert len(data) >= 2 # Deve ter o admin que logou e o "another_admin"
-    assert any(admin["username"] == "list_admin" for admin in data)
-    assert any(admin["username"] == "another_admin" for admin in data)
+    # Verifica se há pelo menos o admin de teste e os recém-criados
+    assert len(data) >= 3 
+    assert any(admin["username"] == "admin1" for admin in data)
+    assert any(admin["username"] == "admin2" for admin in data)
+    assert "password_hash" not in data[0] # Garante que hashes de senha não são expostos
 
-# Teste de leitura de admin específico por outro admin
-@pytest.mark.asyncio
-async def test_read_specific_admin_user_as_admin(client: AsyncClient, db_session_override: Session):
-    admin_password = "ReaderAdmi123!" # Senha ajustada
-    admin_token = await get_admin_token(client, db_session_override, "reader_admin", admin_password)
-    headers = {"Authorization": f"Bearer {admin_token['access_token']}"}
+# Teste de leitura de admin específico como administrador
+# Removido @pytest.mark.asyncio e alterado para TestClient
+def test_read_specific_admin_user_as_admin(client: TestClient, db_session_override: Session):
+    admin_password = "ReadAdmin123!" # Senha ajustada
+    # Garante que o admin que fará a requisição exista
+    _ = create_test_admin_user(db_session_override, "reader_admin", admin_password)
+    # Removido await
+    admin_token = get_admin_token(client, db_session_override, "reader_admin", admin_password)
+    headers = {"Authorization": f"Bearer {admin_token}"}
 
-    target_admin_credentials = await create_test_admin_user(db_session_override, "target_admin", "TargetAdm123!") # Senha ajustada
+    # Cria um admin alvo para ser lido
+    target_admin = create_test_admin_user(db_session_override, "admin_to_read", "ToReadAdmin123!") # Senha ajustada
 
-    response = await client.get(f"/admin_users/{target_admin_credentials['id']}", headers=headers)
+    # Removido await
+    response = client.get(f"/admin_users/{target_admin.id}", headers=headers)
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == target_admin_credentials["id"]
-    assert data["username"] == target_admin_credentials["username"]
+    assert data["id"] == target_admin.id
+    assert data["username"] == target_admin.username
+    assert "password_hash" not in data
 
 # Teste de atualização de admin por outro admin
-@pytest.mark.asyncio
-async def test_update_admin_user_as_admin(client: AsyncClient, db_session_override: Session):
+# Removido @pytest.mark.asyncio e alterado para TestClient
+def test_update_admin_user_as_admin(client: TestClient, db_session_override: Session):
     admin_password = "UpdaterAdmi123!" # Senha ajustada
-    admin_token = await get_admin_token(client, db_session_override, "updater_admin", admin_password)
-    headers = {"Authorization": f"Bearer {admin_token['access_token']}"}
+    # Garante que o admin que fará a requisição exista
+    _ = create_test_admin_user(db_session_override, "updater_admin", admin_password)
+    # Removido await
+    admin_token = get_admin_token(client, db_session_override, "updater_admin", admin_password)
+    headers = {"Authorization": f"Bearer {admin_token}"}
 
-    target_admin_credentials = await create_test_admin_user(db_session_override, "admin_to_update", "ToUpdateAd12!") # Senha ajustada
+    target_admin = create_test_admin_user(db_session_override, "admin_to_update", "ToUpdateAd12!") # Senha ajustada
 
     updated_data = {"username": "updated_admin_name"}
-    response = await client.put(
-        f"/admin_users/{target_admin_credentials['id']}",
+    # Removido await
+    response = client.put(
+        f"/admin_users/{target_admin.id}",
         json=updated_data,
         headers=headers
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == target_admin_credentials["id"]
+    assert data["id"] == target_admin.id
     assert data["username"] == updated_data["username"]
 
 # Teste de exclusão de admin por outro admin
-@pytest.mark.asyncio
-async def test_delete_admin_user_as_admin(client: AsyncClient, db_session_override: Session):
+# Removido @pytest.mark.asyncio e alterado para TestClient
+def test_delete_admin_user_as_admin(client: TestClient, db_session_override: Session):
     admin_password = "DeleterAdmi123!" # Senha ajustada
-    admin_token = await get_admin_token(client, db_session_override, "deleter_admin", admin_password)
-    headers = {"Authorization": f"Bearer {admin_token['access_token']}"}
+    # Garante que o admin que fará a requisição exista
+    _ = create_test_admin_user(db_session_override, "deleter_admin", admin_password)
+    # Removido await
+    admin_token = get_admin_token(client, db_session_override, "deleter_admin", admin_password)
+    headers = {"Authorization": f"Bearer {admin_token}"} # Usar o token diretamente
 
-    target_admin_credentials = await create_test_admin_user(db_session_override, "admin_to_delete", "ToDeleteAd12!") # Senha ajustada
+    # Cria o admin alvo para ser deletado
+    target_admin = create_test_admin_user(db_session_override, "admin_to_delete", "ToDeleteAd12!") # Senha ajustada
 
-    response = await client.delete(f"/admin_users/{target_admin_credentials['id']}", headers=headers)
+    # Removido await
+    response = client.delete(f"/admin_users/{target_admin.id}", headers=headers)
     assert response.status_code == 204 # No Content
-
-    # Tente buscar o admin deletado para confirmar a exclusão
-    response = await client.get(f"/admin_users/{target_admin_credentials['id']}", headers=headers)
-    assert response.status_code == 404 # Not Found
+    
+    # Verifica se o admin foi realmente deletado
+    deleted_admin = db_session_override.query(AdminUser).filter(AdminUser.id == target_admin.id).first()
+    assert deleted_admin is None

@@ -1,8 +1,8 @@
 """create_tables
 
-Revision ID: 0e2b9de01669
-Revises: 7264a86245f7
-Create Date: 2025-05-27 12:59:11.152614
+Revision ID: 40c0eb0551e7
+Revises: 3573f07e65e1
+Create Date: 2025-05-27 21:13:43.014195
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision: str = '0e2b9de01669'
-down_revision: Union[str, None] = '7264a86245f7'
+revision: str = '40c0eb0551e7'
+down_revision: Union[str, None] = '3573f07e65e1'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -66,7 +66,8 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('github_id'),
-    sa.UniqueConstraint('google_id')
+    sa.UniqueConstraint('google_id'),
+    sa.UniqueConstraint('phone_number')
     )
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
     op.create_table('briefings',
