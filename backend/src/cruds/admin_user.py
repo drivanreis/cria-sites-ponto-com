@@ -2,15 +2,10 @@
 
 from sqlalchemy.orm import Session
 from typing import List, Optional
-# Removido: from passlib.context import CryptContext (movido para security.py)
 from src.models.admin_user import AdminUser
 from src.schemas.admin_user import AdminUserCreate, AdminUserUpdate
 from src.utils.datetime_utils import get_current_datetime_str # Mantido para get_current_datetime_str
-
-# >>> NOVIDADE/CORREÇÃO: Importar get_password_hash e verify_password do módulo de segurança <<<
 from src.core.security import get_password_hash, verify_password
-
-# Removido: pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") (movido para security.py)
 
 # --- Funções CRUD ---
 
@@ -24,7 +19,6 @@ def get_admin_users(db: Session, skip: int = 0, limit: int = 100) -> List[AdminU
     return db.query(AdminUser).offset(skip).limit(limit).all()
 
 def create_admin_user(db: Session, admin_user: AdminUserCreate) -> AdminUser:
-    # >>> CORREÇÃO: Usar get_password_hash do módulo de segurança <<<
     hashed_password = get_password_hash(admin_user.password)
     current_datetime_str = get_current_datetime_str()
 
@@ -45,7 +39,6 @@ def update_admin_user(db: Session, admin_user_id: int, admin_user: AdminUserUpda
         update_data = admin_user.model_dump(exclude_unset=True) 
         
         if "password" in update_data and update_data["password"]:
-            # >>> CORREÇÃO: Usar get_password_hash do módulo de segurança <<<
             hashed_password = get_password_hash(update_data["password"])
             db_admin_user.password_hash = hashed_password
             del update_data["password"]
@@ -66,5 +59,3 @@ def delete_admin_user(db: Session, admin_user_id: int) -> bool:
         db.commit()
         return True
     return False
-
-# Removido: def verify_password(plain_password: str, hashed_password: str) -> bool: (movido para security.py)

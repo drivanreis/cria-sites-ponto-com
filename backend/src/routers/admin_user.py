@@ -36,7 +36,7 @@ def create_new_admin_user(
 
     db_admin_user = crud_admin_user.get_admin_user_by_username(db, username=admin_user.username)
     if db_admin_user:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Admin user username already registered")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Nome de usuário do administrador já registrado")
     return crud_admin_user.create_admin_user(db=db, admin_user=admin_user)
 
 @router.get("/", response_model=List[AdminUserInDB])
@@ -65,7 +65,7 @@ def read_admin_user(
 
     db_admin_user = crud_admin_user.get_admin_user(db, admin_user_id=admin_user_id)
     if db_admin_user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin user not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin Usário não encontrado")
     return db_admin_user
 
 @router.put("/{admin_user_id}", response_model=AdminUserInDB)
@@ -83,7 +83,7 @@ def update_existing_admin_user(
 
     db_admin_user = crud_admin_user.update_admin_user(db, admin_user_id=admin_user_id, admin_user=admin_user)
     if db_admin_user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin user not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin Usário não encontrado")
     return db_admin_user
 
 @router.delete("/{admin_user_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -100,5 +100,5 @@ def delete_existing_admin_user(
 
     success = crud_admin_user.delete_admin_user(db, admin_user_id=admin_user_id)
     if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin user not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin Usário não encontrado")
     return

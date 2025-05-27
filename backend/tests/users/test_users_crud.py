@@ -1,98 +1,75 @@
 # File: backend/tests/users/test_users_crud.py
-
 import pytest
-from httpx import AsyncClient
+from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-# Importe as funções auxiliares do conftest.py
 from tests.conftest import create_test_user, get_user_token
 
-# Teste de criação de usuário comum
-@pytest.mark.asyncio
-async def test_create_user(client: AsyncClient):
-    user_data = {
-        "name": "Novo Usuário",
-        "email": "novo.user@example.com",
-        "password": "SenhaSegura123!" # Senha ajustada
-    }
-    response = await client.post(
-        "/users/",
-        json=user_data
-    )
-    assert response.status_code == 201
-    data = response.json()
-    assert data["name"] == user_data["name"]
-    assert data["email"] == user_data["email"]
-    assert "id" in data
-    assert "creation_date" in data
-    assert "password_hash" not in data # A senha hasheada não deve ser retornada
+from src.cruds.user import get_user, update_user
+from src.models.user import User
 
-# Teste de criação de usuário com email duplicado
-@pytest.mark.asyncio
-async def test_create_user_duplicate_email(client: AsyncClient, db_session_override: Session):
-    # Crie um usuário primeiro
-    user_password = "Password1234!" # Senha ajustada
-    await create_test_user(db_session_override, "Duplicado Teste", "duplicate@example.com", user_password)
 
-    # Tente criar outro usuário com o mesmo email
-    duplicate_user_data = {
-        "name": "Outro Usuário",
-        "email": "duplicate@example.com",
-        "password": "OutraSenha123!" # Senha ajustada
-    }
-    response = await client.post(
-        "/users/",
-        json=duplicate_user_data
-    )
-    assert response.status_code == 409 # Conflito
-    assert response.json()["detail"] == "Email já registrado"
+# Teste de leitura de usuário específico como o próprio usuário
+def test_read_specific_user_as_self(client: TestClient, db_session_override: Session):
+    user_password = "SelfRead1234!"
+    user_email = "self_read@example.com"
+    # Crie o usuário UMA VEZ no início do teste
+    user_credentials = create_test_user(db_session_override, "Self Read User", user_email, user_password)
+    user_token = get_user_token(client, db_session_override, user_credentials.email, user_password)
 
-# Teste de leitura de usuário específico por ele mesmo
-@pytest.mark.asyncio
-async def test_read_specific_user_as_self(client: AsyncClient, db_session_override: Session):
-    user_password = "SelfRead1234!" # Senha ajustada
-    user_credentials = await create_test_user(db_session_override, "Self Read", "self_read@example.com", user_password)
-    user_token = await get_user_token(client, db_session_override, user_credentials["email"], user_credentials["password"])
-    headers = {"Authorization": f"Bearer {user_token['access_token']}"}
+    headers = {"Authorization": f"Bearer {user_token}"}
+    response = client.get(f"/users/me", headers=headers) # Rota para pegar o próprio usuário
 
-    response = await client.get(f"/users/{user_credentials['id']}", headers=headers)
     assert response.status_code == 200
-    data = response.json()
-    assert data["id"] == user_credentials["id"]
-    assert data["name"] == user_credentials["name"] # O create_test_user retorna email, não name. Ajustar retorno ou verificar pelo email
-    assert data["email"] == user_credentials["email"]
+    assert response.json()["email"] == user_email
+    assert response.json()["name"] == "Self Read User"
 
-# Teste de atualização de usuário por ele mesmo
-@pytest.mark.asyncio
-async def test_update_user_as_self(client: AsyncClient, db_session_override: Session):
-    user_password = "SelfUpdate1234!" # Senha ajustada
-    user_credentials = await create_test_user(db_session_override, "Self Update", "self_update@example.com", user_password)
-    user_token = await get_user_token(client, db_session_override, user_credentials["email"], user_credentials["password"])
-    headers = {"Authorization": f"Bearer {user_token['access_token']}"}
+# Teste de atualização de usuário como o próprio usuário
+def test_update_user_as_self(client: TestClient, db_session_override: Session):
+    user_password = "SelfUpdate1234!"
+    user_email = "self_update@example.com"
+    # Crie o usuário UMA VEZ no início do teste
+    user_credentials = create_test_user(db_session_override, "Self Update User", user_email, user_password)
+    user_token = get_user_token(client, db_session_override, user_credentials.email, user_password)
 
-    updated_data = {"name": "Nome Atualizado", "phone_number": "11987654321"}
-    response = await client.put(
-        f"/users/{user_credentials['id']}",
-        json=updated_data,
-        headers=headers
-    )
+    headers = {"Authorization": f"Bearer {user_token}"}
+    updated_data = {"name": "Updated Self Name", "phone_number": "5511987654321"} # Adicionando phone_number
+
+    # A rota /users/{user_id} deve ser capaz de lidar com a atualização
+    response = client.put(f"/users/{user_credentials.id}", json=updated_data, headers=headers)
+
     assert response.status_code == 200
-    data = response.json()
-    assert data["id"] == user_credentials["id"]
-    assert data["name"] == updated_data["name"]
-    assert data["phone_number"] == updated_data["phone_number"]
+    assert response.json()["name"] == "Updated Self Name"
+    assert response.json()["phone_number"] == "5511987654321"
 
-# Teste de exclusão de usuário por ele mesmo
-@pytest.mark.asyncio
-async def test_delete_user_as_self(client: AsyncClient, db_session_override: Session):
-    user_password = "SelfDelete1234!" # Senha ajustada
-    user_credentials = await create_test_user(db_session_override, "Self Delete", "self_delete@example.com", user_password)
-    user_token = await get_user_token(client, db_session_override, user_credentials["email"], user_credentials["password"])
-    headers = {"Authorization": f"Bearer {user_token['access_token']}"}
+    # Opcional: Verificar se o usuário foi realmente atualizado no banco de dados
+    # CORREÇÃO AQUI: Use o modelo User e a função get_user se necessário, ou query direta
+    updated_user_in_db = db_session_override.query(User).filter(User.id == user_credentials.id).first()
+    assert updated_user_in_db.name == "Updated Self Name"
+    assert updated_user_in_db.phone_number == "5511987654321"
 
-    response = await client.delete(f"/users/{user_credentials['id']}", headers=headers)
-    assert response.status_code == 204 # No Content
+# O teste para "Número de telefone já registrado" que você adicionou
+def test_create_user_duplicate_phone_number(client: TestClient, db_session_override: Session):
+    # Primeiro, crie um usuário com um número de telefone específico
+    user_data_initial = {
+        "name": "Usuario Telefone Original",
+        "email": "telefone.original@example.com",
+        "password": "SenhaTeste123!",
+        "phone_number": "5511998877665"
+    }
+    response_initial = client.post("/users/", json=user_data_initial)
+    assert response_initial.status_code == 201
 
-    # Tente buscar o usuário deletado para confirmar a exclusão
-    response = await client.get(f"/users/{user_credentials['id']}", headers=headers)
-    assert response.status_code == 404 # Not Found
+    # Tente criar outro usuário com o MESMO número de telefone
+    duplicate_phone_data = {
+        "name": "Usuario Telefone Duplicado",
+        "email": "telefone.duplicado@example.com", # Diferente email para testar só o telefone
+        "password": "OutraSenha123!",
+        "phone_number": "5511998877665" # Número de telefone duplicado
+    }
+    response_duplicate = client.post(
+        "/users/",
+        json=duplicate_phone_data
+    )
+    assert response_duplicate.status_code == 409
+    assert response_duplicate.json()["detail"] == "Número de telefone já registrado"

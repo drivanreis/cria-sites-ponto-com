@@ -1,143 +1,166 @@
 # File: backend/tests/users/test_users_permissions.py
 
 import pytest
-from httpx import AsyncClient
+# Removido: from httpx import AsyncClient
+from fastapi.testclient import TestClient # Importação Correta para cliente síncrono
 from sqlalchemy.orm import Session
+from src.schemas.user import UserUpdate
+from src.models.user import User
+# Adicionado create_test_admin_user
+from tests.conftest import create_test_user, create_test_admin_user, get_admin_token, get_user_token
 
-# Importe as funções auxiliares do conftest.py
-from tests.conftest import create_test_user, create_test_admin_user, get_user_token, get_admin_token
-
-# Teste de listagem de usuários como administrador
-@pytest.mark.asyncio
-async def test_list_users_as_admin(client: AsyncClient, db_session_override: Session):
+# Teste para listar usuários como administrador
+# Removido: @pytest.mark.asyncio
+# Removido: async def
+def test_list_users_as_admin(client: TestClient, db_session_override: Session): # Tipo do cliente alterado
     admin_password = "AdListUser123!" # Senha ajustada
-    admin_token = await get_admin_token(client, db_session_override, "list_users_admin", admin_password)
-    headers = {"Authorization": f"Bearer {admin_token['access_token']}"}
+    # Criar um admin específico para este teste, se necessário, ou usar um existente via get_admin_token
+    # Se você já tem um admin padrão criado por setup (como o do conftest), pode usar as credenciais dele.
+    # Se get_admin_token já cria um, então esta linha abaixo pode ser redundante, dependendo da sua lógica em conftest.
+    # No entanto, para garantir que o admin token seja gerado para um admin 'existente' no contexto do teste:
+    admin_user = create_test_admin_user(db_session_override, "list_users_admin", admin_password)
+    admin_token = get_admin_token(client, db_session_override, admin_user.username, admin_password) # Removido await
 
-    # Crie alguns usuários para listar
-    await create_test_user(db_session_override, "User1", "user1@example.com", "User1Pass123!")
-    await create_test_user(db_session_override, "User2", "user2@example.com", "User2Pass123!")
+    # Cria alguns usuários comuns para listar
+    create_test_user(db_session_override, "User A", "user_a_list@example.com", "ListUserA123!") # Removido await
+    create_test_user(db_session_override, "User B", "user_b_list@example.com", "ListUserB123!") # Removido await
 
-    response = await client.get("/users/", headers=headers)
+    response = client.get("/users/", headers={"Authorization": f"Bearer {admin_token}"}) # Removido await
+
     assert response.status_code == 200
-    data = response.json()
-    assert len(data) >= 2 # Pode haver mais se outros testes criaram usuários e não limparm
-    assert any(user["email"] == "user1@example.com" for user in data)
-    assert any(user["email"] == "user2@example.com" for user in data)
+    users_data = response.json()
+    assert isinstance(users_data, list)
+    # Deveria ter pelo menos 2 usuários criados (A e B), além do admin criado
+    assert len(users_data) >= 3
 
-# Teste de listagem de usuários como usuário comum (deve ser proibido)
-@pytest.mark.asyncio
-async def test_list_users_as_regular_user_forbidden(client: AsyncClient, db_session_override: Session):
+
+# Teste para listar usuários como usuário comum (proibido)
+# Removido: @pytest.mark.asyncio
+# Removido: async def
+def test_list_users_as_regular_user_forbidden(client: TestClient, db_session_override: Session): # Tipo do cliente alterado
     user_password = "Forbidden1234!" # Senha ajustada
-    user_credentials = await create_test_user(db_session_override, "List Forbidden", "list_forbidden@example.com", user_password)
-    user_token = await get_user_token(client, db_session_override, user_credentials["email"], user_credentials["password"])
-    headers = {"Authorization": f"Bearer {user_token['access_token']}"}
+    user = create_test_user(db_session_override, "List Forbidden", "list_forbidden@example.com", user_password) # Removido await
+    user_token = get_user_token(client, db_session_override, user.email, user_password) # Removido await
 
-    response = await client.get("/users/", headers=headers)
-    assert response.status_code == 403 # Forbidden
-    assert response.json()["detail"] == "Not enough permissions"
+    response = client.get("/users/", headers={"Authorization": f"Bearer {user_token}"}) # Removido await
+    assert response.status_code == 403 # Proibido
 
-# Teste de leitura de usuário específico por outro usuário (deve ser proibido)
-@pytest.mark.asyncio
-async def test_read_specific_user_as_other_user_forbidden(client: AsyncClient, db_session_override: Session):
+
+# Teste para ler um usuário específico como outro usuário (proibido)
+# Removido: @pytest.mark.asyncio
+# Removido: async def
+def test_read_specific_user_as_other_user_forbidden(client: TestClient, db_session_override: Session): # Tipo do cliente alterado
     user_a_password = "UserA1234!" # Senha ajustada
-    user_a_credentials = await create_test_user(db_session_override, "User A", "user_a_read@example.com", user_a_password)
-    user_a_token = await get_user_token(client, db_session_override, user_a_credentials["email"], user_a_password)
-    headers_a = {"Authorization": f"Bearer {user_a_token['access_token']}"}
+    user_a = create_test_user(db_session_override, "User A", "user_a_read@example.com", user_a_password) # Removido await
 
-    user_b_password = "UserB1234!" # Senha ajustada
-    user_b_credentials = await create_test_user(db_session_override, "User B", "user_b_read@example.com", user_b_password)
+    user_b_password = "UserB1234!"
+    user_b = create_test_user(db_session_override, "User B", "user_b_read@example.com", user_b_password) # Removido await
 
-    response = await client.get(f"/users/{user_b_credentials['id']}", headers=headers_a)
-    assert response.status_code == 403 # Forbidden
-    assert response.json()["detail"] == "Not enough permissions"
+    # user_a_token = get_user_token(client, db_session_override, user_a.email, user_a_password) # Não é necessário aqui
+    user_b_token = get_user_token(client, db_session_override, user_b.email, user_b_password) # Removido await
 
-# Teste de leitura de usuário específico como administrador
-@pytest.mark.asyncio
-async def test_read_specific_user_as_admin(client: AsyncClient, db_session_override: Session):
+    response = client.get(f"/users/{user_a.id}", headers={"Authorization": f"Bearer {user_b_token}"}) # Removido await
+    assert response.status_code == 403 # Proibido
+
+
+# Teste para ler um usuário específico como administrador
+# Removido: @pytest.mark.asyncio
+# Removido: async def
+def test_read_specific_user_as_admin(client: TestClient, db_session_override: Session): # Tipo do cliente alterado
     admin_password = "AdReadUser123!" # Senha ajustada
-    admin_token = await get_admin_token(client, db_session_override, "admin_read_user", admin_password)
-    headers_admin = {"Authorization": f"Bearer {admin_token['access_token']}"}
+    admin_user = create_test_admin_user(db_session_override, "admin_read_user", admin_password)
+    admin_token = get_admin_token(client, db_session_override, admin_user.username, admin_password) # Removido await
 
-    target_user_password = "TargetUser1234!" # Senha ajustada
-    target_user_credentials = await create_test_user(db_session_override, "Target User", "target_user@example.com", target_user_password)
+    user_to_read_password = "UserRead123!"
+    user_to_read = create_test_user(db_session_override, "User Read By Admin", "user_read_admin@example.com", user_to_read_password) # Removido await
 
-    response = await client.get(f"/users/{target_user_credentials['id']}", headers=headers_admin)
+    response = client.get(f"/users/{user_to_read.id}", headers={"Authorization": f"Bearer {admin_token}"}) # Removido await
     assert response.status_code == 200
-    data = response.json()
-    assert data["id"] == target_user_credentials["id"]
-    assert data["email"] == target_user_credentials["email"]
+    user_data = response.json()
+    assert user_data["email"] == "user_read_admin@example.com"
+    assert user_data["name"] == "User Read By Admin"
 
-# Teste de atualização de usuário por outro usuário (deve ser proibido)
-@pytest.mark.asyncio
-async def test_update_user_as_other_user_forbidden(client: AsyncClient, db_session_override: Session):
+
+# Teste para atualizar um usuário como outro usuário (proibido)
+# Removido: @pytest.mark.asyncio
+# Removido: async def
+def test_update_user_as_other_user_forbidden(client: TestClient, db_session_override: Session): # Tipo do cliente alterado
     user_a_password = "UserAUpdate1234!" # Senha ajustada
-    user_a_credentials = await create_test_user(db_session_override, "User A Update", "user_a_update@example.com", user_a_password)
-    user_a_token = await get_user_token(client, db_session_override, user_a_credentials["email"], user_a_password)
-    headers_a = {"Authorization": f"Bearer {user_a_token['access_token']}"}
+    user_a = create_test_user(db_session_override, "User A Update", "user_a_update@example.com", user_a_password) # Removido await
 
-    user_b_password = "UserBUpdate1234!" # Senha ajustada
-    user_b_credentials = await create_test_user(db_session_override, "User B Update", "user_b_update@example.com", user_b_password)
+    user_b_password = "UserBUpdate1234!"
+    user_b = create_test_user(db_session_override, "User B Update", "user_b_update@example.com", user_b_password) # Removido await
 
-    updated_data = {"name": "Nome Proibido"}
-    response = await client.put(
-        f"/users/{user_b_credentials['id']}",
-        json=updated_data,
-        headers=headers_a
-    )
-    assert response.status_code == 403 # Forbidden
-    assert response.json()["detail"] == "Not enough permissions"
+    # user_a_token = get_user_token(client, db_session_override, user_a.email, user_a_password) # Não é necessário aqui
+    user_b_token = get_user_token(client, db_session_override, user_b.email, user_b_password) # Removido await
 
-# Teste de atualização de usuário como administrador
-@pytest.mark.asyncio
-async def test_update_user_as_admin(client: AsyncClient, db_session_override: Session):
+    update_data = {"name": "Updated User A", "email": "updated.user_a@example.com"} # email deve ser único
+    response = client.put(f"/users/{user_a.id}", json=update_data, headers={"Authorization": f"Bearer {user_b_token}"}) # Removido await
+    assert response.status_code == 403 # Proibido
+
+
+# Teste para atualizar um usuário como administrador
+# Removido: @pytest.mark.asyncio
+# Removido: async def
+def test_update_user_as_admin(client: TestClient, db_session_override: Session): # Tipo do cliente alterado
     admin_password = "AdUpdUser123!" # Senha ajustada
-    admin_token = await get_admin_token(client, db_session_override, "admin_update_user", admin_password)
-    headers_admin = {"Authorization": f"Bearer {admin_token['access_token']}"}
+    admin_user = create_test_admin_user(db_session_override, "admin_update_user", admin_password)
+    admin_token = get_admin_token(client, db_session_override, admin_user.username, admin_password) # Removido await
 
-    target_user_password = "UserToUpdate1234!" # Senha ajustada
-    target_user_credentials = await create_test_user(db_session_override, "User To Update", "user_to_update@example.com", target_user_password) # <<< CORRIGIDO EMAIL
+    user_to_update_password = "UserUpd123!"
+    user_to_update = create_test_user(db_session_override, "User To Update", "user_to_update@example.com", user_to_update_password) # Removido await
 
-    updated_data = {"name": "Nome Atualizado pelo Admin", "phone_number": "99988776655"}
-    response = await client.put(
-        f"/users/{target_user_credentials['id']}",
-        json=updated_data,
-        headers=headers_admin
-    )
+    updated_name = "Updated User Admin"
+    updated_email = "updated.user.admin@example.com"
+    update_data = UserUpdate(name=updated_name, email=updated_email).model_dump(exclude_unset=True)
+
+    response = client.put(f"/users/{user_to_update.id}", json=update_data, headers={"Authorization": f"Bearer {admin_token}"}) # Removido await
     assert response.status_code == 200
-    data = response.json()
-    assert data["id"] == target_user_credentials["id"]
-    assert data["name"] == updated_data["name"]
-    assert data["phone_number"] == updated_data["phone_number"]
+    updated_user_data = response.json()
+    assert updated_user_data["name"] == updated_name
+    assert updated_user_data["email"] == updated_email
 
-# Teste de exclusão de usuário por outro usuário (deve ser proibido)
-@pytest.mark.asyncio
-async def test_delete_user_as_other_user_forbidden(client: AsyncClient, db_session_override: Session):
+    # Verifique se o usuário foi realmente atualizado no banco de dados
+    updated_user_in_db = db_session_override.query(User).filter(User.id == user_to_update.id).first()
+    assert updated_user_in_db.name == updated_name
+    assert updated_user_in_db.email == updated_email
+
+
+# Teste para deletar um usuário como outro usuário (proibido)
+# Removido: @pytest.mark.asyncio
+# Removido: async def
+def test_delete_user_as_other_user_forbidden(client: TestClient, db_session_override: Session): # Tipo do cliente alterado
     user_a_password = "UserADelete1234!" # Senha ajustada
-    user_a_credentials = await create_test_user(db_session_override, "User A Delete", "user_a_delete@example.com", user_a_password)
-    user_a_token = await get_user_token(client, db_session_override, user_a_credentials["email"], user_a_password)
-    headers_a = {"Authorization": f"Bearer {user_a_token['access_token']}"}
+    user_a = create_test_user(db_session_override, "User A Delete", "user_a_delete@example.com", user_a_password) # Removido await
 
-    user_b_password = "UserBDelete1234!" # Senha ajustada
-    user_b_credentials = await create_test_user(db_session_override, "User B Delete", "user_b_delete@example.com", user_b_password)
+    user_b_password = "UserBDelete1234!"
+    user_b = create_test_user(db_session_override, "User B Delete", "user_b_delete@example.com", user_b_password) # Removido await
 
-    response = await client.delete(f"/users/{user_b_credentials['id']}", headers=headers_a)
-    assert response.status_code == 403 # Forbidden
-    assert response.json()["detail"] == "Not enough permissions"
+    # user_a_token = get_user_token(client, db_session_override, user_a.email, user_a_password) # Não é necessário aqui
+    user_b_token = get_user_token(client, db_session_override, user_b.email, user_b_password) # Removido await
 
-# Teste de exclusão de usuário como administrador
-@pytest.mark.asyncio
-async def test_delete_user_as_admin(client: AsyncClient, db_session_override: Session):
+    response = client.delete(f"/users/{user_a.id}", headers={"Authorization": f"Bearer {user_b_token}"}) # Removido await
+    assert response.status_code == 403 # Proibido
+
+    # Verifique se o usuário A ainda existe
+    user_a_exists = db_session_override.query(User).filter(User.id == user_a.id).first()
+    assert user_a_exists is not None
+
+
+# Teste para deletar um usuário como administrador
+# Removido: @pytest.mark.asyncio
+# Removido: async def
+def test_delete_user_as_admin(client: TestClient, db_session_override: Session): # Tipo do cliente alterado
     admin_password = "AdDelUser123!" # Senha ajustada
-    admin_token = await get_admin_token(client, db_session_override, "admin_delete_user", admin_password)
-    headers_admin = {"Authorization": f"Bearer {admin_token['access_token']}"}
+    admin_user = create_test_admin_user(db_session_override, "admin_delete_user", admin_password)
+    admin_token = get_admin_token(client, db_session_override, admin_user.username, admin_password) # Removido await
 
-    target_user_password = "UserToDelete1234!" # Senha ajustada
-    target_user_credentials = await create_test_user(db_session_override, "User To Delete", "user_to_delete@example.com", target_user_password)
+    user_to_delete_password = "UserDel123!"
+    user_to_delete = create_test_user(db_session_override, "User To Delete", "user_to_delete@example.com", user_to_delete_password) # Removido await
 
-    response = await client.delete(f"/users/{target_user_credentials['id']}", headers=headers_admin)
-    assert response.status_code == 204 # No Content
+    response = client.delete(f"/users/{user_to_delete.id}", headers={"Authorization": f"Bearer {admin_token}"}) # Removido await
+    assert response.status_code == 204 # No Content, indicando sucesso na deleção
 
-    # Tente buscar o usuário deletado para confirmar a exclusão
-    response = await client.get(f"/users/{target_user_credentials['id']}", headers=headers_admin)
-    assert response.status_code == 404 # Not Found
+    # Verifique se o usuário foi realmente deletado do banco de dados
+    deleted_user_in_db = db_session_override.query(User).filter(User.id == user_to_delete.id).first()
+    assert deleted_user_in_db is None

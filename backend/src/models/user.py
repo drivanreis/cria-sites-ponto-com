@@ -8,7 +8,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     email = Column(String(255), unique=True, nullable=True) # Permitir NULL para login social sem email local
     email_verified = Column(Boolean, default=False)
-    phone_number = Column(String(20), nullable=True)
+    phone_number = Column(String(20), unique=True, nullable=True)
     password_hash = Column(String(255), nullable=True) # Presente apenas para contas com login local
     name = Column(String(255), nullable=False) # Assumindo que o nome é obrigatório para um usuário
     google_id = Column(String(255), unique=True, nullable=True) # ID único do Google para login social

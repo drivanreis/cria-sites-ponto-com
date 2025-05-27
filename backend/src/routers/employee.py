@@ -27,7 +27,7 @@ def create_new_employee(employee: EmployeeCreate, db: Session = Depends(get_db))
     if db_employee_exists:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Employee with role_name '{employee.role_name}' already registered"
+            detail=f"Funcionário com nome de função '{employee.role_name}' já registrado"
         )
     
     return crud_employee.create_employee(db=db, employee=employee)
@@ -41,21 +41,21 @@ def read_employees(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
 def read_employee(employee_id: int, db: Session = Depends(get_db)):
     db_employee = crud_employee.get_employee(db, employee_id=employee_id)
     if db_employee is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Funcionário não encontrado")
     return db_employee
 
 @router.put("/{employee_id}", response_model=EmployeeInDB)
 def update_existing_employee(employee_id: int, employee: EmployeeUpdate, db: Session = Depends(get_db)):
     db_employee = crud_employee.update_employee(db, employee_id=employee_id, employee=employee)
     if db_employee is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Funcionário não encontrado")
     return db_employee
 
 @router.delete("/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_existing_employee(employee_id: int, db: Session = Depends(get_db)):
     success = crud_employee.delete_employee(db, employee_id=employee_id)
     if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Funcionário não encontrado")
     # CORRIGIDO: Para 204 No Content, o corpo da resposta deve ser vazio.
     return
 

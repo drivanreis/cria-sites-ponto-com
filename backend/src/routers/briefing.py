@@ -40,20 +40,20 @@ def read_briefings(
 def read_briefing(briefing_id: int, db: Session = Depends(get_db)):
     db_briefing = crud_briefing.get_briefing(db, briefing_id=briefing_id)
     if db_briefing is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Briefing not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Briefing não encontrado")
     return db_briefing
 
 @router.put("/{briefing_id}", response_model=BriefingInDB)
 def update_existing_briefing(briefing_id: int, briefing: BriefingUpdate, db: Session = Depends(get_db)):
     db_briefing = crud_briefing.update_briefing(db, briefing_id=briefing_id, briefing=briefing)
     if db_briefing is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Briefing not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Briefing não encontrado")
     return db_briefing
 
 @router.delete("/{briefing_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_existing_briefing(briefing_id: int, db: Session = Depends(get_db)):
     success = crud_briefing.delete_briefing(db, briefing_id=briefing_id)
     if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Briefing not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Briefing não encontrado")
     # CORRIGIDO: Para 204 No Content, o corpo da resposta deve ser vazio.
     return

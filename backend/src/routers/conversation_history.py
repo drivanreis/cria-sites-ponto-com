@@ -42,7 +42,7 @@ def read_conversation_history(
 def read_conversation_message(message_id: int, db: Session = Depends(get_db)):
     db_message = crud_conv_history.get_conversation_message(db, message_id=message_id)
     if db_message is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation message not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mensagem de conversa não encontrada")
     return db_message
 
 @router.put("/{message_id}", response_model=ConversationHistoryInDB)
@@ -53,13 +53,13 @@ def update_existing_conversation_message(
 ):
     db_message = crud_conv_history.update_conversation_message(db, message_id=message_id, message=message)
     if db_message is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation message not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mensagem de conversa não encontrada")
     return db_message
 
 @router.delete("/{message_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_existing_conversation_message(message_id: int, db: Session = Depends(get_db)):
     success = crud_conv_history.delete_conversation_message(db, message_id=message_id)
     if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation message not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mensagem de conversa não encontrada")
     # CORRIGIDO: Para 204 No Content, o corpo da resposta deve ser vazio.
     return

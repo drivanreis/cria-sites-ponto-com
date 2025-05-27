@@ -11,9 +11,10 @@ echo "----------------------------------------------" >> $LOG_FILE # Adiciona li
 # docker compose exec backend pytest > $LOG_FILE 2>&1
 
 # O comando para rodar o arquivo específico (descomente o que precisar)
-docker compose exec backend pytest tests/test_auth.py > $LOG_FILE 2>&1
+
+# docker compose exec backend pytest tests/test_auth.py > $LOG_FILE 2>&1
 # docker compose exec backend pytest tests/users/test_users_crud.py > $LOG_FILE 2>&1
-# docker compose exec backend pytest tests/users/test_users_permissions.py > $LOG_FILE 2>&1
+docker compose exec backend pytest tests/users/test_users_permissions.py > $LOG_FILE 2>&1
 # docker compose exec backend pytest tests/admin_users/test_admin_users_crud.py > $LOG_FILE 2>&1
 # docker compose exec backend pytest tests/admin_users/test_admin_users_permissions.py > $LOG_FILE 2>&1
 
