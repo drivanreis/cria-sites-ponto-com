@@ -3,7 +3,6 @@
 
 clear
 echo "Iniciando o processo de limpeza e inicialização do ambiente Docker..."
-sleep 1
 sudo ./cls_file.sh
 sleep 1
 ./limpeza_docker.sh

@@ -10,13 +10,13 @@ class Briefing(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id')) # Vincula o briefing ao usuário
-    title = Column(String(255), unique=True, default='Meus Hobbes') # Tipo de briefing (ex: 'pessoal', 'empresarial')
+    title = Column(String(255), unique=True, default='Meus Hobbes')
     content = Column(JSON) # Conteúdo estruturado do briefing gerado/editado
     status = Column(String(50), default='Em Construção') # Status (ex: 'Em Construção', 'Pronto para Revisão')
     development_roteiro = Column(JSON, nullable=True) # Roteiro/orçamento manual do administrador
-    creation_date = Column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    update_date = Column(DateTime, nullable=True) # Data da última alteração
-    last_edited_by = Column(String(50), nullable=True) # Quem fez a última edição ('user' ou 'admin')
+    creation_date = Column(String(19), nullable=False)
+    update_date = Column(String(19), nullable=True) # Data da última alteração
+    last_edited_by = Column(String(5), nullable=True) # Quem fez a última edição (user_type: 'user' ou 'admin')
 
     # Define o relacionamento com a tabela users
     user = relationship("User", back_populates="briefings")

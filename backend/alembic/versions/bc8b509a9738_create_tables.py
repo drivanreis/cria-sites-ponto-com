@@ -1,8 +1,8 @@
 """create_tables
 
-Revision ID: 07f01ba79efd
-Revises: e19c5f75830d
-Create Date: 2025-05-25 21:56:42.322920
+Revision ID: bc8b509a9738
+Revises: 852e200d0291
+Create Date: 2025-05-26 03:26:41.429281
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision: str = '07f01ba79efd'
-down_revision: Union[str, None] = 'e19c5f75830d'
+revision: str = 'bc8b509a9738'
+down_revision: Union[str, None] = '852e200d0291'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -76,9 +76,9 @@ def upgrade() -> None:
     sa.Column('content', mysql.JSON(), nullable=True),
     sa.Column('status', sa.String(length=50), nullable=True),
     sa.Column('development_roteiro', mysql.JSON(), nullable=True),
-    sa.Column('creation_date', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
-    sa.Column('update_date', sa.DateTime(), nullable=True),
-    sa.Column('last_edited_by', sa.String(length=50), nullable=True),
+    sa.Column('creation_date', sa.String(length=19), nullable=False),
+    sa.Column('update_date', sa.String(length=19), nullable=True),
+    sa.Column('last_edited_by', sa.String(length=5), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('title'),

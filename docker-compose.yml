@@ -1,7 +1,5 @@
 # File: docker-compose.yml
 
-version: '3.8' # Versão recomendada para usar healthchecks e depends_on avançados
-
 services:
   db:
     image: mysql:8.0
