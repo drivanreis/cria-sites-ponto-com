@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from src.cruds import conversation_history as crud_conv_history
-from src.schemas.conversation_history import ConversationHistoryCreate, ConversationHistoryUpdate, ConversationHistoryInDB
+from src.cruds import conversation_history_cruds as crud_conv_history
+from src.schemas.conversation_history_schemas import ConversationHistoryCreate, ConversationHistoryUpdate, ConversationHistoryInDB
 from src.db.database import get_db
 
 # CORRIGIDO: Adicionado prefix e tags para organização da API

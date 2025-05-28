@@ -3,7 +3,7 @@
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, text, ForeignKey
 from ..db.database import Base
-from ..models.briefing import Briefing
+from .briefing_models import Briefing
 from sqlalchemy.orm import relationship
 
 

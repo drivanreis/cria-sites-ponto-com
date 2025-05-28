@@ -3,8 +3,8 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional # Importar Optional
 
-from src.models.conversation_history import ConversationHistory
-from src.schemas.conversation_history import ConversationHistoryCreate, ConversationHistoryUpdate
+from src.models.conversation_history_models import ConversationHistory
+from src.schemas.conversation_history_schemas import ConversationHistoryCreate, ConversationHistoryUpdate
 # from src.utils.datetime_utils import get_current_datetime_brasilia # Remover se não for mais usada aqui
 
 def get_conversation_message(db: Session, message_id: int) -> Optional[ConversationHistory]:

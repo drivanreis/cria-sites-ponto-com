@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from tests.conftest import create_test_user, get_user_token
 
-from src.cruds.user import get_user, update_user
-from src.models.user import User
+from src.cruds.user_cruds import get_user, update_user
+from src.models.user_models import User
 
 
 # Teste de leitura de usuário específico como o próprio usuário

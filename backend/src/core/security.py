@@ -8,9 +8,9 @@ from passlib.context import CryptContext # Para hashing de senhas
 from sqlalchemy.orm import Session # Para a função authenticate_user
 
 from src.core.config import settings
-from src.schemas.token import TokenData # O esquema TokenData (id, username, user_type)
-from src.models.admin_user import AdminUser # Modelo de AdminUser
-from src.models.user import User # Modelo de User comum
+from src.schemas.token_schemas import TokenData # O esquema TokenData (id, username, user_type)
+from src.models.admin_user_models import AdminUser # Modelo de AdminUser
+from src.models.user_models import User # Modelo de User comum
 
 # Contexto para hashing de senhas
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

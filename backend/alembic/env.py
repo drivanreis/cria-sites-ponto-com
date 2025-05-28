@@ -28,11 +28,13 @@ config.set_main_option("sqlalchemy.url", database_url)
 from src.db.database import Base
 
 # Importação explícita das models, garantindo ordem
-from src.models.admin_user import AdminUser
-from src.models.briefing import Briefing
-from src.models.conversation_history import ConversationHistory
-from src.models.employee import Employee
-from src.models.user import User
+from src.models.admin_user_models import AdminUser
+from src.models.employee_models import Employee
+from src.models.user_models import User
+from src.models.briefing_models import Briefing
+from src.models.conversation_history_models import ConversationHistory
+
+
 
 # Definindo o target_metadata para o Alembic
 target_metadata = Base.metadata

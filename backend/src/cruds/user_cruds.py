@@ -2,8 +2,8 @@
 
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from src.models.user import User
-from src.schemas.user import UserCreate, UserUpdate
+from src.models.user_models import User
+from src.schemas.user_schemas import UserCreate, UserUpdate
 from src.utils.datetime_utils import get_current_datetime_str
 from src.core.security import get_password_hash, verify_password
 from fastapi import HTTPException, status # Importar para levantar HTTPExceptions

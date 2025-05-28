@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from tests.conftest import create_test_admin_user, get_admin_token
-from src.models.admin_user import AdminUser
+from src.models.admin_user_models import AdminUser
 
 # Teste de criação de admin por outro admin
 def test_create_admin_user_as_admin(client: TestClient, db_session_override: Session):

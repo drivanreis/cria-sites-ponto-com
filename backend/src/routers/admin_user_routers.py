@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from src.cruds import admin_user as crud_admin_user
-from src.schemas.admin_user import AdminUserCreate, AdminUserUpdate, AdminUserInDB
+from src.cruds import admin_user_cruds as crud_admin_user
+from src.schemas.admin_user_schemas import AdminUserCreate, AdminUserUpdate, AdminUserInDB
 from src.db.database import get_db
 # >>> CORREÇÃO CHAVE: Importar a dependência ESPECÍFICA para ADMIN <<<
 from src.dependencies.oauth2 import get_current_admin_user # Importa a nova dependência

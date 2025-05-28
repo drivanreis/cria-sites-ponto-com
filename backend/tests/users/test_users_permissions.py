@@ -3,8 +3,8 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from src.schemas.user import UserUpdate
-from src.models.user import User
+from src.schemas.user_schemas import UserUpdate
+from src.models.user_models import User
 from tests.conftest import create_test_user, create_test_admin_user, get_admin_token, get_user_token
 
 def test_list_users(client: TestClient, db_session_override: Session):

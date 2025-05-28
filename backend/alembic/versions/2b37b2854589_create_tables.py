@@ -1,8 +1,8 @@
 """create_tables
 
-Revision ID: 40c0eb0551e7
-Revises: 3573f07e65e1
-Create Date: 2025-05-27 21:13:43.014195
+Revision ID: 2b37b2854589
+Revises: 24bd58955591
+Create Date: 2025-05-28 10:59:33.976598
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision: str = '40c0eb0551e7'
-down_revision: Union[str, None] = '3573f07e65e1'
+revision: str = '2b37b2854589'
+down_revision: Union[str, None] = '24bd58955591'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -35,18 +35,16 @@ def upgrade() -> None:
     op.create_index(op.f('ix_admin_users_id'), 'admin_users', ['id'], unique=False)
     op.create_table('employees',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('role_name', sa.String(length=100), nullable=True),
-    sa.Column('display_name', sa.String(length=100), nullable=True),
-    sa.Column('ai_service_name', sa.String(length=100), nullable=True),
-    sa.Column('endpoint', sa.String(length=255), nullable=True),
-    sa.Column('model', sa.String(length=100), nullable=True),
-    sa.Column('api_key_env_var_name', sa.String(length=100), nullable=True),
-    sa.Column('initial_pre_prompt', sa.Text(), nullable=True),
-    sa.Column('context_instructions', sa.Text(), nullable=True),
-    sa.Column('creation_date', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
-    sa.Column('update_date', sa.DateTime(), nullable=True),
+    sa.Column('employee_name', sa.String(length=30), nullable=False),
+    sa.Column('employee_script', mysql.JSON(), nullable=False),
+    sa.Column('ia_name', sa.String(length=30), nullable=False),
+    sa.Column('endpoint_url', sa.String(length=255), nullable=False),
+    sa.Column('endpoint_key', sa.String(length=255), nullable=False),
+    sa.Column('headers_template', mysql.JSON(), nullable=False),
+    sa.Column('body_template', mysql.JSON(), nullable=False),
+    sa.Column('last_update', sa.String(length=19), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('role_name')
+    sa.UniqueConstraint('employee_name')
     )
     op.create_index(op.f('ix_employees_id'), 'employees', ['id'], unique=False)
     op.create_table('users',

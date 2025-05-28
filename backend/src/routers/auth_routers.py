@@ -7,15 +7,15 @@ from sqlalchemy.orm import Session
 from typing import Annotated, Union # Adicionado Union para tipagem
 
 from src.db.database import get_db
-from src.schemas.token import Token # <<< IMPORTANTE: Mantive esta importação para response_model=Token
+from src.schemas.token_schemas import Token # <<< IMPORTANTE: Mantive esta importação para response_model=Token
 from src.core.config import settings
 from src.utils.datetime_utils import get_current_datetime_str # Para o last_login
 
 # >>> IMPORTAÇÕES CHAVE DO NOVO MÓDULO DE SEGURANÇA <<<
 from src.core.security import create_access_token, authenticate_user
 # Importar os modelos de banco de dados para a verificação de tipo (isinstance)
-from src.models.admin_user import AdminUser
-from src.models.user import User
+from src.models.admin_user_models import AdminUser
+from src.models.user_models import User
 
 router = APIRouter(
     prefix="/auth",

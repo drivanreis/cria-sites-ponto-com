@@ -8,7 +8,8 @@ LOG_FILE="pytest_log_$(date +%Y%m%d_%H%M%S).txt" # Nome do arquivo de log com ti
 echo "Executando testes e salvando log em: $LOG_FILE"
 echo "----------------------------------------------" >> $LOG_FILE # Adiciona linha divisória ao log
 
-docker compose exec backend pytest > $LOG_FILE 2>&1
+# docker compose exec backend pytest > $LOG_FILE 2>&1
+docker compose exec backend pytest --cov=. tests/admin_users/ tests/users/ tests/test_auth.py > $LOG_FILE 2>&1
 
 # O comando para rodar o arquivo específico (descomente o que precisar)
 

@@ -10,6 +10,7 @@ import time
 
 # >>> Adição para CORS
 from fastapi.middleware.cors import CORSMiddleware
+from src.routers import admin_user_routers, auth_routers, briefing_routers, conversation_history_routers, employee_routers
 from src.middlewares.cors import CORS_MIDDLEWARE_SETTINGS
 # <<< Fim da adição para CORS
 
@@ -23,10 +24,10 @@ if backend_root not in sys.path:
 
 # Importações após ajustar sys.path
 from src.db.database import SessionLocal, engine, Base
-from src.routers import user, admin_user, employee, briefing, conversation_history, auth
-from src.cruds import admin_user as crud_admin_user
-from src.schemas.admin_user import AdminUserCreate
-from src.schemas.user import UserCreate
+from src.routers import user_routers
+from src.cruds import admin_user_cruds as crud_admin_user
+from src.schemas.admin_user_schemas import AdminUserCreate
+from src.schemas.user_schemas import UserCreate
 from src.core.config import settings
 
 # >>> CORREÇÃO: Criar a instância 'app' AQUI, antes de qualquer uso dela <<<
@@ -85,12 +86,12 @@ def get_db():
         db.close()
 
 # Incluir os routers
-app.include_router(user.router)
-app.include_router(admin_user.router)
-app.include_router(employee.router)
-app.include_router(briefing.router)
-app.include_router(conversation_history.router)
-app.include_router(auth.router)
+app.include_router(user_routers.router)
+app.include_router(admin_user_routers.router)
+app.include_router(employee_routers.router)
+app.include_router(briefing_routers.router)
+app.include_router(conversation_history_routers.router)
+app.include_router(auth_routers.router)
 
 
 @app.get("/")

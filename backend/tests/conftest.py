@@ -5,11 +5,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
 from src.db.database import Base, get_db
-from src.models.user import User
-from src.models.admin_user import AdminUser
-from src.models.employee import Employee
-from src.models.briefing import Briefing
-from src.models.conversation_history import ConversationHistory
+from src.models.user_models import User
+from src.models.admin_user_models import AdminUser
+from src.models.employee_models import Employee
+from src.models.briefing_models import Briefing
+from src.models.conversation_history_models import ConversationHistory
 from src.core.security import get_password_hash
 from src.core.config import settings
 from src.utils.datetime_utils import get_current_datetime_str

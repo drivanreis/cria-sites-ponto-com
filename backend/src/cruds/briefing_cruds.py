@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional # Importar Optional
 from datetime import datetime # Para usar datetime.now() para update_date
 
-from src.models.briefing import Briefing
-from src.schemas.briefing import BriefingCreate, BriefingUpdate
+from src.models.briefing_models import Briefing
+from src.schemas.briefing_schemas import BriefingCreate, BriefingUpdate
 # from src.utils.datetime_utils import get_current_datetime_brasilia # Remover se não for mais usada aqui
 
 def get_briefing(db: Session, briefing_id: int) -> Optional[Briefing]:

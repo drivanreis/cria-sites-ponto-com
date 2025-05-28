@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from src.cruds import briefing as crud_briefing
-from src.schemas.briefing import BriefingCreate, BriefingUpdate, BriefingInDB
+from src.cruds import briefing_cruds as crud_briefing
+from src.schemas.briefing_schemas import BriefingCreate, BriefingUpdate, BriefingInDB
 from src.db.database import get_db
 
 # CORRIGIDO: Adicionado prefix e tags para organização da API

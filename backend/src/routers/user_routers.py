@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from src.cruds import user as crud_user
-from src.schemas.user import UserCreate, UserUpdate, UserInDB
+from src.cruds import user_cruds as crud_user
+from src.schemas.user_schemas import UserCreate, UserUpdate, UserInDB
 from src.db.database import get_db
 # >>> NOVIDADE: Importar a dependência de autenticação <<<
 from src.dependencies.oauth2 import get_current_user_from_token
 # >>> NOVIDADE: Importar TokenData para tipagem <<<
-from src.schemas.token import TokenData
+from src.schemas.token_schemas import TokenData
 
 router = APIRouter(
     prefix="/users",
