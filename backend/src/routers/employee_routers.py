@@ -1,4 +1,4 @@
-# File: backend/src/routers/employee.py
+# File: backend/src/routers/employee_routers.py
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -8,8 +8,8 @@ from src.cruds import employee_cruds
 from src.schemas.employee_schemas import EmployeeRead, EmployeeUpdate, EmployeeCreateInternal
 from src.db.database import get_db
 from src.models.employee_models import Base, Employee
+from src.dependencies.oauth2 import get_current_admin_user # Importa a dependência de segurança para admin
 
-# CORRIGIDO: Adicionado prefix e tags para organização da API
 router = APIRouter(
     prefix="/employees",
     tags=["Employees"]
@@ -17,14 +17,15 @@ router = APIRouter(
 
 # --- Lógica de Inicialização (Startup Event) ---
 # Esta função será executada quando a aplicação iniciar.
+# Conforme a nossa discussão, esta lógica será MOVIDA para main.py
+# e, portanto, será REMOVIDA deste arquivo no PRÓXIMO PASSO (main.py).
+# Por agora, estou mantendo-a para o fluxo da revisão, mas ela será removida.
 @router.on_event("startup")
 async def startup_event():
-    db: Session = next(get_db()) # Obtém uma sessão do banco de dados
+    db: Session = next(get_db())
     try:
-        # Garante que as tabelas sejam criadas, se ainda não existirem
         Base.metadata.create_all(bind=db.get_bind())
 
-        # Define os dados dos 3 registros mínimos esperados
         required_employees_data = [
             {
                 "employee_name": "Entrevistador Pessoal",
@@ -56,10 +57,7 @@ async def startup_event():
         ]
 
         for emp_data_raw in required_employees_data:
-            # Valida os dados usando o schema de criação interna
             validated_data = EmployeeCreateInternal(**emp_data_raw)
-            
-            # Verifica se o funcionário já existe pelo nome antes de tentar criar
             existing_employee = employee_cruds.get_employee_by_name(db, employee_name=validated_data.employee_name)
             
             if not existing_employee:
@@ -68,22 +66,35 @@ async def startup_event():
             else:
                 print(f"Registro de funcionário mínimo já existe: {validated_data.employee_name}")
     finally:
-        db.close() # Sempre feche a sessão do banco de dados
+        db.close()
 
 # --- Rotas da API ---
+# Todas as rotas abaixo AGORA exigirão um token válido DE UM ADMINISTRADOR.
+# O parâmetro 'current_admin_user' receberá os dados do token (id, username, user_type)
+# Se o token for inválido, ausente ou o user_type não for 'admin',
+# a dependência get_current_admin_user levantará uma HTTPException 401 UNAUTHORIZED ou 403 FORBIDDEN.
 
 @router.get("/", response_model=List[EmployeeRead])
-def read_employees(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_employees(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_admin_user: dict = Depends(get_current_admin_user) # Protegido para admin
+):
     """
-    Retorna uma lista de todos os funcionários.
+    Retorna uma lista de todos os funcionários. Apenas administradores podem acessar.
     """
     employees = employee_cruds.get_all_employees(db, skip=skip, limit=limit)
     return employees
 
 @router.get("/{employee_id}", response_model=EmployeeRead)
-def read_employee(employee_id: int, db: Session = Depends(get_db)):
+def read_employee(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_admin_user: dict = Depends(get_current_admin_user) # Protegido para admin
+):
     """
-    Retorna um funcionário específico pelo seu ID.
+    Retorna um funcionário específico pelo seu ID. Apenas administradores podem acessar.
     """
     db_employee = employee_cruds.get_employee_by_id(db, employee_id=employee_id)
     if db_employee is None:
@@ -91,11 +102,17 @@ def read_employee(employee_id: int, db: Session = Depends(get_db)):
     return db_employee
 
 @router.put("/{employee_id}", response_model=EmployeeRead)
-def update_existing_employee(employee_id: int, employee: EmployeeUpdate, db: Session = Depends(get_db)):
+def update_existing_employee(
+    employee_id: int,
+    employee: EmployeeUpdate,
+    db: Session = Depends(get_db),
+    current_admin_user: dict = Depends(get_current_admin_user) # Protegido para admin
+):
     """
-    Atualiza um funcionário existente. O campo 'employee_name' não pode ser modificado.
+    Atualiza um funcionário existente. O campo 'employee_name' não pode ser modificado. Apenas administradores podem acessar.
     """
-    db_employee = employee.update_employee(db, employee_id=employee_id, employee_update_data=employee)
+    # CORREÇÃO: Chamar a função update_employee do módulo employee_cruds, não do objeto 'employee'
+    db_employee = employee_cruds.update_employee(db, employee_id=employee_id, employee_update_data=employee)
     if db_employee is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Funcionário não encontrado")
     return db_employee

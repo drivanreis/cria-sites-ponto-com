@@ -1,18 +1,28 @@
-# File: backend/src/crud/employee.py
+# File: backend/src/crud/employee_cruds.py
 
 from sqlalchemy.orm import Session
 from sqlalchemy import exc
 from src.utils.datetime_utils import get_current_datetime_str
-from ..models.employee_models import Employee
-from ..schemas.employee_schemas import EmployeeUpdate, EmployeeCreateInternal # Use os schemas corretos
+from ..models.employee_models import Employee # Ajustada importação para employee_models.py
+from ..schemas.employee_schemas import EmployeeUpdate, EmployeeCreateInternal # Ajustada importação para employee_schemas.py
 
-# ... (funções get_employee_by_id, get_all_employees como antes) ...
+def get_employee_by_id(db: Session, employee_id: int):
+    """
+    Busca um funcionário pelo seu ID.
+    """
+    return db.query(Employee).filter(Employee.id == employee_id).first()
 
 def get_employee_by_name(db: Session, employee_name: str):
     """
     Busca um funcionário pelo seu nome (employee_name).
     """
     return db.query(Employee).filter(Employee.employee_name == employee_name).first()
+
+def get_all_employees(db: Session, skip: int = 0, limit: int = 100):
+    """
+    Retorna uma lista de todos os funcionários, com paginação opcional.
+    """
+    return db.query(Employee).offset(skip).limit(limit).all()
 
 def create_employee_initial(db: Session, employee_data: EmployeeCreateInternal):
     """
@@ -52,7 +62,7 @@ def update_employee(db: Session, employee_id: int, employee_update_data: Employe
 
     update_data = employee_update_data.model_dump(exclude_unset=True)
 
-    if "employee_name" in update_data: # Camada de segurança extra
+    if "employee_name" in update_data:
         del update_data["employee_name"]
 
     for key, value in update_data.items():

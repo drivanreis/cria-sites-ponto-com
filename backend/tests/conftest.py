@@ -32,6 +32,11 @@ def db_session_override():
     transaction = connection.begin()
     session = TestingSessionLocal(bind=connection)
 
+    # Adicionada limpeza para Employee, Briefing e ConversationHistory
+    session.query(Employee).delete()
+    session.query(Briefing).delete()
+    session.query(ConversationHistory).delete()
+
     try:
         session.query(AdminUser).filter(AdminUser.username == settings.DEFAULT_ADMIN_USERNAME).delete()
         session.query(User).filter(User.email == settings.DEFAULT_ADMIN_USERNAME).delete() # Se DEFAULT_ADMIN_USERNAME pode ser um email de usuário
@@ -125,3 +130,32 @@ def get_admin_token(client: TestClient, db: Session, username: str, password: st
     response = client.post("/auth/login", data=login_data)
     response.raise_for_status()
     return response.json()["access_token"]
+
+# --- NOVA FUNÇÃO AUXILIAR PARA EMPLOYEES ---
+def create_test_employee(db: Session, employee_name: str, ia_name: str = "TestIA", endpoint_url: str = "http://test.com", endpoint_key: str = "key", employee_script: dict = None, headers_template: dict = None, body_template: dict = None):
+    """Cria um registro de Employee de teste e o adiciona ao banco de dados."""
+    if employee_script is None:
+        employee_script = {"purpose": "testing"}
+    if headers_template is None:
+        headers_template = {"X-Test-Header": "value"}
+    if body_template is None:
+        body_template = {"test_body_param": "value"}
+
+    current_datetime_str = get_current_datetime_str()
+
+    employee_data = {
+        "employee_name": employee_name,
+        "employee_script": employee_script,
+        "ia_name": ia_name,
+        "endpoint_url": endpoint_url,
+        "endpoint_key": endpoint_key,
+        "headers_template": headers_template,
+        "body_template": body_template,
+        "last_update": current_datetime_str # Definir na criação
+    }
+    
+    new_employee = Employee(**employee_data)
+    db.add(new_employee)
+    db.commit()
+    db.refresh(new_employee)
+    return new_employee

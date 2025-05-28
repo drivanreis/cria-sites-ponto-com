@@ -1,4 +1,4 @@
-# File: backend/src/models/employee.py
+# File: backend/src/models/employee_models.py
 
 from sqlalchemy import Column, Integer, String
 from ..db.database import Base
