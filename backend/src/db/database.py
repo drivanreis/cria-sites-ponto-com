@@ -3,7 +3,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 import time
-# >>> CORREÇÃO: Importar 'settings' do nosso módulo de configuração <<<
 from src.core.config import settings
 
 # >>> CORREÇÃO: Obter DATABASE_URL diretamente de 'settings' <<<

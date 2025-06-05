@@ -1,68 +1,123 @@
+# File: backend/src/dependencies/oauth2.py
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from pydantic import BaseModel
-from typing import Optional, Union # Adicionado Union
+from sqlalchemy.orm import Session
+from typing import Optional, Union
+import logging
 
-# Importar as configurações centralizadas
 from src.core.config import settings
+from src.schemas.token_schemas import TokenData
+from src.db.database import get_db
+from src.models.admin_user_models import AdminUser
+from src.models.user_models import User
 
-# Define o endpoint onde o cliente pode obter um token
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Esquema para o payload do token JWT
-class TokenData(BaseModel):
-    id: Optional[int] = None
-    username: Optional[str] = None # Para login de admin_user (ou username de user)
-    # O campo 'email' não é mais diretamente lido do payload, pois 'username' já serve para ambos.
-    # Pode ser removido ou mantido como None se não for usado. Vamos mantê-lo por segurança
-    # para não causar conflitos em outros locais se for referenciado.
-    email: Optional[str] = None 
-    user_type: Optional[str] = None # 'admin' ou 'user'
+# Esquema OAuth2 para extrair o token do cabeçalho Authorization
+# O tokenUrl deve apontar para a rota de login da sua aplicação
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login") # Aponta para a rota de login unificada
 
-async def get_current_user_from_token(token: str = Depends(oauth2_scheme)):
+# --- Funções de Decodificação e Validação de Token ---
+
+def decode_access_token(token: str) -> TokenData:
+    """
+    Decodifica um token JWT e valida seu payload.
+    Levanta HTTPException se o token for inválido ou expirado.
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Não foi possível validar as credenciais",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        # Tenta decodificar o token usando a chave secreta e o algoritmo
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         
-        user_id: int = payload.get("id")
-        username: Optional[str] = payload.get("username") # Este será o identificador de login (username ou email/telefone)
-        user_type: str = payload.get("user_type")
+        # Extrai os dados do payload e valida-os com o schema TokenData
+        token_id: int = payload.get("id")
+        token_username: str = payload.get("username")
+        token_user_type: str = payload.get("user_type")
+        token_email: Optional[str] = payload.get("email") # Captura o email se presente no token
 
-        # Verifica se o ID e o tipo de usuário existem no token
-        if user_id is None or user_type is None:
+        if token_id is None or token_username is None or token_user_type is None:
             raise credentials_exception
         
-        # Cria o objeto TokenData. O campo 'email' do TokenData será preenchido pelo 'username' do payload
-        # se o user_type for 'user' e o identificador for um email.
-        # Para admins, 'email' será None e 'username' será o username do admin.
-        token_data = TokenData(
-            id=user_id,
-            username=username, # 'username' do TokenData recebe o identificador do token
-            email=username if user_type == 'user' and '@' in username else None, # Tenta preencher email se for user e tiver @
-            user_type=user_type
-        )
-        
-    except JWTError:
-        raise credentials_exception
+        # Retorna uma instância de TokenData
+        return TokenData(id=token_id, username=token_username, user_type=token_user_type, email=token_email)
     
-    return token_data
+    except JWTError as e:
+        logger.warning(f"Erro de JWT ao decodificar token: {e}")
+        raise credentials_exception
+    except Exception as e:
+        logger.error(f"Erro inesperado ao decodificar token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro interno do servidor ao processar token."
+        )
 
-# >>> NOVIDADE/CORREÇÃO CHAVE: Dependência para verificar se o usuário atual é um ADMINISTRADOR <<<
-async def get_current_admin_user(current_user: TokenData = Depends(get_current_user_from_token)):
+
+async def get_current_user_from_token(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> Union[AdminUser, User]: # Pode retornar um AdminUser ou um User
     """
-    Dependência que verifica se o token pertence a um usuário com user_type 'admin'.
-    Se não for admin, levanta uma exceção HTTP 403 FORBIDDEN.
+    Dependência que valida o token, decodifica-o e busca o usuário correspondente no DB.
+    Retorna o objeto AdminUser ou User do banco de dados.
     """
-    if current_user.user_type != "admin":
+    token_data = decode_access_token(token) # Usa a função de decodificação
+
+    # Agora, buscar o usuário no banco de dados com base nas informações do token_data
+    if token_data.user_type == "admin":
+        user_in_db = db.query(AdminUser).filter(AdminUser.id == token_data.id).first()
+        if not user_in_db:
+            logger.warning(f"AdminUser com ID '{token_data.id}' não encontrado para token válido.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Administrador não encontrado.")
+        logger.info(f"AdminUser ID {user_in_db.id} autenticado via token.")
+        return user_in_db
+    elif token_data.user_type == "user":
+        # Pode buscar por ID, email ou phone_number dependendo de como o token foi criado
+        user_in_db = db.query(User).filter(User.id == token_data.id).first()
+        if not user_in_db:
+            logger.warning(f"User com ID '{token_data.id}' não encontrado para token válido.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado.")
+        logger.info(f"User ID {user_in_db.id} autenticado via token.")
+        return user_in_db
+    else:
+        logger.error(f"Tipo de usuário desconhecido no token: '{token_data.user_type}'")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tipo de usuário não reconhecido.")
+
+
+# --- Funções de Dependência Específicas por Tipo de Usuário ---
+
+async def get_current_admin_user(
+    current_user: Union[AdminUser, User] = Depends(get_current_user_from_token)
+) -> AdminUser:
+    """
+    Dependência que garante que o usuário autenticado é um AdminUser.
+    Retorna o objeto AdminUser.
+    """
+    if not isinstance(current_user, AdminUser):
+        logger.warning(f"Acesso negado: Usuário ID '{current_user.id}' (tipo '{current_user.user_type if hasattr(current_user, 'user_type') else 'desconhecido'}') tentou acessar rota de admin.")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Operação não permitida. Requer privilégios de administrador."
         )
-    return current_user # Retorna o TokenData do admin (para uso posterior na rota, se necessário)
+    return current_user # Já é um AdminUser
 
-# Este arquivo está pronto para ser usado como dependência!
+async def get_current_common_user(
+    current_user: Union[AdminUser, User] = Depends(get_current_user_from_token)
+) -> User:
+    """
+    Dependência que garante que o usuário autenticado é um User comum.
+    Retorna o objeto User.
+    """
+    if not isinstance(current_user, User):
+        logger.warning(f"Acesso negado: Usuário ID '{current_user.id}' (tipo '{current_user.user_type if hasattr(current_user, 'user_type') else 'desconhecido'}') tentou acessar rota de usuário comum.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Operação não permitida. Requer privilégios de usuário comum."
+        )
+    return current_user # Já é um User

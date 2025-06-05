@@ -1,48 +1,44 @@
-# File: backend/src/schemas/briefing.py
+# File: backend/src/schemas/briefing_schemas.py
 
-from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import Optional, Any # Importar Any para campos JSON
+from typing import Optional, Dict, Any, List
+from datetime import datetime # Esta importação não é mais usada para tipagem de campos, mas pode ser útil para funções de data.
 
-# Esquema Base para Briefing, contendo os campos comuns
-# que podem ser usados para entrada e saída.
+# Importar o schema de histórico de conversas
+from src.schemas.conversation_history_schemas import ConversationHistoryRead 
+
+# Reutilizando os Schemas existentes
 class BriefingBase(BaseModel):
-    user_id: int # Obrigatório, conforme model
-    title: Optional[str] = Field("Meus Hobbes", max_length=255) # Opcional, com default do modelo
-    content: Any # JSON do SQLAlchemy mapeia para Any ou dict no Pydantic.
-                 # Se o JSON tiver uma estrutura conhecida, pode usar um Pydantic Model aninhado aqui.
-                 # Por simplicidade, usamos Any.
-    status: Optional[str] = Field("Em Construção", max_length=50) # Opcional, com default do modelo
-    development_roteiro: Optional[Any] = None # Opcional, JSON
-    last_edited_by: Optional[str] = Field(None, max_length=50) # Opcional
+    title: str = Field(..., max_length=255)
+    status: str = Field(default="Rascunho", max_length=50)
+    content: Optional[Dict[str, Any]] = None # JSONField no DB, Dict[str, Any] no Pydantic
 
-# Esquema para criação de um novo Briefing
 class BriefingCreate(BriefingBase):
-    # Todos os campos necessários para criação já estão em BriefingBase,
-    # mas aqui podemos torná-los explicitamente obrigatórios se quisermos
-    # sobrepor os defaults (ex: title sem default)
-    # Exemplo: title: str = Field(..., max_length=255) se você quiser que seja obrigatório na criação
+    pass # Este schema é bom para criação, pois BriefingBase já define os campos básicos.
 
-    # Para seguir a lógica do modelo, onde title e status têm default,
-    # BriefingBase já está bom.
-    pass
-
-
-# Esquema para atualização de um Briefing existente (todos os campos são opcionais)
 class BriefingUpdate(BaseModel):
-    title: Optional[str] = Field(None, max_length=255)
-    content: Optional[Any] = None
-    status: Optional[str] = Field(None, max_length=50)
-    development_roteiro: Optional[Any] = None
-    last_edited_by: Optional[str] = Field(None, max_length=50)
-    # user_id não deve ser atualizado diretamente via este endpoint
+    title: Optional[str] = None
+    status: Optional[str] = None
+    content: Optional[Dict[str, Any]] = None
+    # >>> NOVIDADE: Adicionado development_roteiro para permitir atualização <<<\n
+    development_roteiro: Optional[Dict[str, Any]] = None
+    # last_edited_by não deve ser um campo de entrada para o cliente,
+    # será preenchido automaticamente pelo backend.
 
-# Esquema para representação de um Briefing no banco de dados (saída da API)
-class BriefingInDB(BriefingBase):
+
+class BriefingRead(BriefingBase):
     id: int
-    creation_date: datetime
-    update_date: Optional[datetime] = None # Opcional no modelo (nullable=True)
+    user_id: int
+    creation_date: str # Mudado para str para corresponder ao modelo do DB
+    update_date: Optional[str] = None # Mudado para str
+    last_edited_by: Optional[str] = None
+    # >>> NOVIDADE: Adicionado development_roteiro ao schema de leitura <<<\n
+    development_roteiro: Optional[Dict[str, Any]] = None
 
     class Config:
-        from_attributes = True # Pydantic v2 (substitui orm_mode = True)
-        # Permite que o Pydantic leia diretamente dos objetos do SQLAlchemy (ORM)
+        from_attributes = True # ou orm_mode = True para Pydantic < v2
+
+
+# NOVO SCHEMA: Briefing com histórico de conversas
+class BriefingWithHistoryRead(BriefingRead):
+    conversation_history: List[ConversationHistoryRead] = []

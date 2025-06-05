@@ -2,7 +2,7 @@
 
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, configure_mappers # Importado configure_mappers
 from fastapi.testclient import TestClient
 from src.db.database import Base, get_db
 from src.models.user_models import User
@@ -14,6 +14,9 @@ from src.core.security import get_password_hash
 from src.core.config import settings
 from src.utils.datetime_utils import get_current_datetime_str
 
+# Importar a aplicação FastAPI para o cliente de teste
+from src.main import app # Importado para o topo para consistência
+
 # Configuração do banco de dados de teste
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
@@ -22,47 +25,64 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
+    """
+    Cria as tabelas do banco de dados antes de todos os testes da sessão
+    e as remove após a conclusão de todos os testes.
+    """
+    # Garante que todos os modelos são importados e conhecidos pela Base.metadata.
+    # As importações no topo do arquivo já fazem isso, executando os módulos de modelo.
+
+    # Explicitamente configura os mappers antes de criar as tabelas.
+    # Isso é crucial para garantir que todos os relacionamentos sejam registrados
+    # antes que o SQLAlchemy tente criar as tabelas ou fazer queries.
+    configure_mappers() # Chamada adicionada aqui!
+    
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture(scope="function")
 def db_session_override():
+    """
+    Fornece uma sessão de banco de dados por teste,
+    garantindo que cada teste comece com um estado limpo.
+    Os dados são revertidos ao final de cada teste.
+    """
     connection = engine.connect()
     transaction = connection.begin()
     session = TestingSessionLocal(bind=connection)
 
-    # Adicionada limpeza para Employee, Briefing e ConversationHistory
-    session.query(Employee).delete()
-    session.query(Briefing).delete()
-    session.query(ConversationHistory).delete()
-
-    try:
-        session.query(AdminUser).filter(AdminUser.username == settings.DEFAULT_ADMIN_USERNAME).delete()
-        session.query(User).filter(User.email == settings.DEFAULT_ADMIN_USERNAME).delete() # Se DEFAULT_ADMIN_USERNAME pode ser um email de usuário
-        session.commit()
-    except Exception as e:
-        session.rollback()
-        print(f"Warning: Could not clear default admin from test DB: {e}")
+    # --- LIMPEZA DE DADOS (ORDEM DE DEPENDÊNCIA É CRÍTICA!) ---
+    # Deletar os filhos antes dos pais para evitar violações de chave estrangeira
+    session.query(ConversationHistory).delete() # Depende de Briefing
+    session.query(Briefing).delete()            # Depende de User
+    session.query(Employee).delete()            # Independente
+    session.query(User).delete()                # Pais
+    session.query(AdminUser).delete()           # Pais
+    session.commit() # Commit as deleções para que o estado do DB esteja limpo antes do teste
 
     yield session
 
     session.close()
-    transaction.rollback()
+    transaction.rollback() # Reverte todas as operações do teste, garantindo limpeza
     connection.close()
 
 @pytest.fixture(scope="function")
 def client(db_session_override: Session):
-    from src.main import app
-
+    """
+    Cria um cliente de teste para a aplicação FastAPI.
+    Sobrescreve a dependência do DB e lida com eventos de startup/shutdown.
+    """
     app.dependency_overrides[get_db] = lambda: db_session_override
 
+    # Desativa eventos de startup para testes, pois eles podem tentar inicializar DB, etc.
     original_startup_events = list(app.router.on_startup)
     app.router.on_startup = []
 
     with TestClient(app) as test_client:
         yield test_client
 
+    # Limpa as sobrescrições e restaura os eventos de startup após o teste
     app.dependency_overrides.clear()
     app.router.on_startup = original_startup_events
 
@@ -72,23 +92,18 @@ def client(db_session_override: Session):
 def create_test_user(db: Session, name: str, email: str, password: str) -> User:
     """Cria um usuário comum de teste no banco de dados."""
     hashed_password_value = get_password_hash(password)
-    current_datetime_str = get_current_datetime_str() # Obter uma vez para consistência
+    current_datetime = get_current_datetime_str() # Obter uma vez para consistência
     
-    # Criar um dicionário com os dados que correspondem exatamente às COLUNAS do modelo User
-    user_data = {
-        "name": name,
-        "email": email,
-        "password_hash": hashed_password_value, # CORRIGIDO: Usando 'password_hash'
-        "creation_date": current_datetime_str,
-        "last_login": current_datetime_str,
-        "email_verified": False,
-        "status": "active", # Conforme o default do seu modelo User
-        # 'phone_number', 'google_id', 'github_id', 'two_factor_secret', 'is_two_factor_enabled'
-        # são nullable=True ou têm defaults no modelo, então não precisam ser passados
-        # a menos que você queira um valor específico para o teste.
-    }
-    
-    new_user = User(**user_data) # Instanciar o modelo a partir do dicionário
+    new_user = User(
+        name=name,
+        email=email,
+        password_hash=hashed_password_value,
+        creation_date=current_datetime,
+        last_login=current_datetime,
+        email_verified=False,
+        status="active",
+        phone_number="11999999999" # Adicionado para garantir que o campo não-nullable seja preenchido, se for o caso
+    )
     
     db.add(new_user)
     db.commit()
@@ -98,19 +113,15 @@ def create_test_user(db: Session, name: str, email: str, password: str) -> User:
 def create_test_admin_user(db: Session, username: str, password: str) -> AdminUser:
     """Cria um usuário administrador de teste no banco de dados."""
     hashed_password_value = get_password_hash(password)
-    current_datetime_str = get_current_datetime_str()
+    current_datetime = get_current_datetime_str()
     
-    # Criar um dicionário com os dados que correspondem exatamente às COLUNAS do modelo AdminUser
-    admin_user_data = {
-        "username": username,
-        "password_hash": hashed_password_value, # CORRIGIDO: Usando 'password_hash'
-        "creation_date": current_datetime_str,
-        "last_login": current_datetime_str,
-        "is_two_factor_enabled": False, # Conforme o default do seu modelo AdminUser
-        # 'two_factor_secret' é nullable=True, então não precisa ser passado
-    }
-    
-    new_admin_user = AdminUser(**admin_user_data) # Instanciar o modelo a partir do dicionário
+    new_admin_user = AdminUser(
+        username=username,
+        password_hash=hashed_password_value,
+        creation_date=current_datetime,
+        last_login=current_datetime,
+        is_two_factor_enabled=False,
+    )
     
     db.add(new_admin_user)
     db.commit()
@@ -141,20 +152,19 @@ def create_test_employee(db: Session, employee_name: str, ia_name: str = "TestIA
     if body_template is None:
         body_template = {"test_body_param": "value"}
 
-    current_datetime_str = get_current_datetime_str()
+    current_datetime = get_current_datetime_str()
 
-    employee_data = {
-        "employee_name": employee_name,
-        "employee_script": employee_script,
-        "ia_name": ia_name,
-        "endpoint_url": endpoint_url,
-        "endpoint_key": endpoint_key,
-        "headers_template": headers_template,
-        "body_template": body_template,
-        "last_update": current_datetime_str # Definir na criação
-    }
+    new_employee = Employee(
+        employee_name=employee_name,
+        employee_script=employee_script,
+        ia_name=ia_name,
+        endpoint_url=endpoint_url,
+        endpoint_key=endpoint_key,
+        headers_template=headers_template,
+        body_template=body_template,
+        last_update=current_datetime
+    )
     
-    new_employee = Employee(**employee_data)
     db.add(new_employee)
     db.commit()
     db.refresh(new_employee)

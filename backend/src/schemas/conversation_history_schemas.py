@@ -1,31 +1,35 @@
-# File: backend/src/schemas/conversation_history.py
+# File: backend/src/schemas/conversation_history_schemas.py
 
-from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Dict, Any # Dict e Any são usados em BriefingRequest, não diretamente nos schemas de history
+from datetime import datetime # Importação não utilizada diretamente para tipagem dos campos.
 
-# Esquema Base para ConversationHistory, contendo os campos comuns
-# que podem ser usados para entrada e saída.
 class ConversationHistoryBase(BaseModel):
-    briefing_id: int # Obrigatório, conforme model
-    speaker_type: str = Field(..., max_length=30) # Obrigatório, conforme model
-    text: str # Obrigatório, conforme model (Text é mapeado para str no Pydantic)
+    sender_type: str = Field(..., max_length=50, description="Tipo do remetente: 'user' ou o nome do employee (ex: 'Entrevistador Pessoal').")
+    message_content: str
 
-# Esquema para criação de um novo registro de ConversationHistory
 class ConversationHistoryCreate(ConversationHistoryBase):
-    pass # Herda todos os campos obrigatórios de ConversationHistoryBase
+    briefing_id: int # Adiciona briefing_id ao schema de criação
 
-# Esquema para atualização de um registro de ConversationHistory (todos os campos são opcionais)
-class ConversationHistoryUpdate(BaseModel):
-    briefing_id: Optional[int] = None
-    speaker_type: Optional[str] = Field(None, max_length=30)
-    text: Optional[str] = None
-
-# Esquema para representação de um registro de ConversationHistory no banco de dados (saída da API)
-class ConversationHistoryInDB(ConversationHistoryBase):
+class ConversationHistoryRead(ConversationHistoryBase): # Usado para leitura (resposta da API)
     id: int
-    timestamp: datetime # Gerado automaticamente pelo banco de dados
+    briefing_id: int
+    timestamp: str # Mudado para str para corresponder ao modelo do DB
 
     class Config:
-        from_attributes = True # Pydantic v2 (substitui orm_mode = True)
-        # Permite que o Pydantic leia diretamente dos objetos do SQLAlchemy (ORM)
+        from_attributes = True
+
+class ConversationHistoryUpdate(BaseModel):
+    message_content: Optional[str] = None # Apenas o conteúdo da mensagem pode ser atualizado
+
+# --- Schemas de Requisição para as Rotas (mantidos como estão) ---
+
+class ChatRequest(BaseModel):
+    """Schema para a requisição de chat com um Employee."""
+    employee_name: str = Field(..., description="O nome do Employee (personagem) com quem conversar.")
+    user_message: str = Field(..., description="A mensagem enviada pelo usuário.")
+
+class BriefingRequest(BaseModel):
+    """Schema para a requisição de compilação de briefing."""
+    employee_name: str = Field(..., description="O nome do Employee (personagem) que irá compilar o briefing (ex: 'Assistente de Palco').")
+    # Poderíamos adicionar outros campos, como um limite de histórico específico para o briefing, se necessário.

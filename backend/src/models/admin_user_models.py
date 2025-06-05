@@ -1,4 +1,4 @@
-# File: backend/src/models/admin_user.py
+# File: backend/src/models/admin_user_models.py
 
 from sqlalchemy import Column, Integer, String, Boolean
 from ..db.database import Base # Importar a Base declarativa

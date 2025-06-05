@@ -9,12 +9,12 @@ echo "Executando testes e salvando log em: $LOG_FILE"
 echo "----------------------------------------------" >> $LOG_FILE # Adiciona linha divisória ao log
 
 # docker compose exec backend pytest > $LOG_FILE 2>&1
-docker compose exec backend pytest --cov=. tests/admin_users/ tests/users/ tests/test_auth.py tests/employees/ > $LOG_FILE 2>&1
+# docker compose exec backend pytest --cov=. tests/admin_users/ tests/users/ tests/test_auth.py tests/employees/ > $LOG_FILE 2>&1
 
 # O comando para rodar o arquivo específico (descomente o que precisar)
 
 # docker compose exec backend pytest tests/test_auth.py > $LOG_FILE 2>&1
-# docker compose exec backend pytest tests/users/test_users_crud.py > $LOG_FILE 2>&1
+docker compose exec backend pytest tests/users/test_users_crud.py > $LOG_FILE 2>&1
 # docker compose exec backend pytest tests/users/test_users_permissions.py > $LOG_FILE 2>&1
 # docker compose exec backend pytest tests/admin_users/test_admin_users_crud.py > $LOG_FILE 2>&1
 # docker compose exec backend pytest tests/admin_users/test_admin_users_permissions.py > $LOG_FILE 2>&1

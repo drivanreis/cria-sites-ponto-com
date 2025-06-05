@@ -1,55 +1,58 @@
-# File: backend/src/cruds/conversation_history.py
+# File: backend/src/cruds/conversation_history_cruds.py
 
 from sqlalchemy.orm import Session
-from typing import List, Optional # Importar Optional
+from typing import List, Optional
+import logging
 
 from src.models.conversation_history_models import ConversationHistory
-from src.schemas.conversation_history_schemas import ConversationHistoryCreate, ConversationHistoryUpdate
-# from src.utils.datetime_utils import get_current_datetime_brasilia # Remover se não for mais usada aqui
+from src.schemas.conversation_history_schemas import ConversationHistoryCreate
+from src.utils.datetime_utils import get_current_datetime_str # Para o timestamp
 
-def get_conversation_message(db: Session, message_id: int) -> Optional[ConversationHistory]:
-    return db.query(ConversationHistory).filter(ConversationHistory.id == message_id).first()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def get_conversation_history_by_briefing(db: Session, briefing_id: int, skip: int = 0, limit: int = 100) -> List[ConversationHistory]:
-    # Order by timestamp to get the conversation in chronological order
-    return db.query(ConversationHistory).filter(ConversationHistory.briefing_id == briefing_id).order_by(ConversationHistory.timestamp).offset(skip).limit(limit).all()
-
-def create_conversation_message(db: Session, message: ConversationHistoryCreate) -> ConversationHistory:
-    db_message = ConversationHistory(
-        briefing_id=message.briefing_id,
-        speaker_type=message.speaker_type,
-        # REMOVIDO: speaker_role_name - Este campo não existe no modelo ConversationHistory
-        text=message.text,
-        # REMOVIDO: timestamp - Ele é definido por server_default=CURRENT_TIMESTAMP no modelo
-        # Não é necessário passar get_current_datetime_brasilia() aqui.
+def create_conversation_entry(db: Session, entry: ConversationHistoryCreate) -> ConversationHistory:
+    """
+    Cria um novo registro de histórico de conversa.
+    """
+    logger.info(f"Criando entrada de conversa para briefing_id: {entry.briefing_id} - Remetente: {entry.sender_type}")
+    db_entry = ConversationHistory(
+        briefing_id=entry.briefing_id,
+        sender_type=entry.sender_type,
+        message_content=entry.message_content,
+        timestamp=get_current_datetime_str() # Preenche automaticamente o timestamp
     )
-    db.add(db_message)
+    db.add(db_entry)
     db.commit()
-    db.refresh(db_message)
-    return db_message
+    db.refresh(db_entry)
+    logger.info(f"Entrada de conversa ID {db_entry.id} criada com sucesso.")
+    return db_entry
 
-def update_conversation_message(db: Session, message_id: int, message: ConversationHistoryUpdate) -> Optional[ConversationHistory]:
-    db_message = db.query(ConversationHistory).filter(ConversationHistory.id == message_id).first()
-    if db_message:
-        for key, value in message.dict(exclude_unset=True).items():
-            # Apenas atribui o valor se o campo existir no modelo ConversationHistory
-            if hasattr(db_message, key):
-                setattr(db_message, key, value)
-            # REMOVIDO: Lógica para updated_at, pois o modelo ConversationHistory não possui esse campo.
-            # Se a coluna 'timestamp' fosse atualizada para refletir a modificação,
-            # precisaríamos adicionar uma lógica específica para isso, mas geralmente
-            # o timestamp de uma mensagem de histórico não é alterado após a criação.
-            # Caso seja necessário ter um timestamp de atualização, adicione 'update_date'
-            # ao modelo ConversationHistory e ao schema.
-        
-        db.commit()
-        db.refresh(db_message)
-    return db_message
+def get_conversation_entry(db: Session, entry_id: int) -> Optional[ConversationHistory]:
+    """
+    Retorna um registro de histórico de conversa pelo seu ID.
+    """
+    logger.info(f"Buscando entrada de conversa com ID: {entry_id}")
+    return db.query(ConversationHistory).filter(ConversationHistory.id == entry_id).first()
 
-def delete_conversation_message(db: Session, message_id: int) -> bool:
-    db_message = db.query(ConversationHistory).filter(ConversationHistory.id == message_id).first()
-    if db_message:
-        db.delete(db_message)
-        db.commit()
-        return True
-    return False
+def get_conversation_history_by_briefing_id(db: Session, briefing_id: int, limit: int = 20) -> List[ConversationHistory]:
+    """
+    Retorna o histórico de conversas para um briefing específico,
+    ordenado por timestamp e limitado.
+    O histórico é retornado em ordem cronológica ascendente (do mais antigo ao mais novo).
+    """
+    logger.info(f"Buscando histórico de conversa para briefing_id: {briefing_id}, limitado a {limit} mensagens.")
+    return (
+        db.query(ConversationHistory)
+        .filter(ConversationHistory.briefing_id == briefing_id)
+        .order_by(ConversationHistory.id.asc()) # Ou .timestamp.asc() se timestamp for mais confiável para ordem
+        .limit(limit)
+        .all()
+    )
+
+def get_all_conversation_history(db: Session, skip: int = 0, limit: int = 100) -> List[ConversationHistory]:
+    """
+    Retorna todo o histórico de conversas (para uso administrativo/debugging).
+    """
+    logger.info(f"Buscando todo o histórico de conversa (admin view), skip: {skip}, limit: {limit}.")
+    return db.query(ConversationHistory).offset(skip).limit(limit).all()

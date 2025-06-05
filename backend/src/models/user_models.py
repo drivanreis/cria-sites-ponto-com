@@ -1,3 +1,5 @@
+# File: /backend/src/models/user_models.py
+
 from sqlalchemy import Column, Integer, String, Boolean # Removido DateTime, text
 from sqlalchemy.orm import relationship
 from ..db.database import Base # Importar a Base declarativa

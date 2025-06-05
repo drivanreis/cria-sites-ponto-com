@@ -5,7 +5,7 @@ from typing import Optional, Any
 
 class EmployeeRead(BaseModel):
     id: int
-    employee_name: str
+    sender_type: str
     employee_script: Any
     ia_name: str
     endpoint_url: str
@@ -19,7 +19,7 @@ class EmployeeRead(BaseModel):
 
 # --- Schema para Atualização (PUT) ---
 # Este schema define os campos que PODEM ser enviados em uma requisição PUT.
-# Note que 'employee_name' NÃO está presente aqui, garantindo que não possa ser atualizado.
+# Note que 'sender_type' NÃO está presente aqui, garantindo que não possa ser atualizado.
 # Todos os campos são Optional, pois em um PUT, o cliente só envia o que deseja alterar.
 class EmployeeUpdate(BaseModel):
     employee_script: Optional[Any] = Field(None, description="Roteiro do personagem. (JSON)")
@@ -35,9 +35,9 @@ class EmployeeUpdate(BaseModel):
 # --- Schema para Criação Interna (para a Inicialização) ---
 # Este schema é usado para validar os dados na função de inicialização da aplicação,
 # garantindo que os registros iniciais estejam completos e corretos.
-# Inclui employee_name pois ele é mandatório na criação.
+# Inclui sender_type pois ele é mandatório na criação.
 class EmployeeCreateInternal(BaseModel):
-    employee_name: str = Field(..., max_length=30, description="Nome do personagem. (Obrigatório)")
+    sender_type: str = Field(..., max_length=30, description="Nome do personagem. (Obrigatório)")
     employee_script: Any = Field(..., description="Roteiro do personagem. (Obrigatório)")
     ia_name: str = Field(..., max_length=30, description="Nome do assistente de IA 'ator'. (Obrigatório)")
     endpoint_url: str = Field(..., max_length=255, description="URL base da API de IA. (Obrigatório)")
