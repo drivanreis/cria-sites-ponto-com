@@ -5,9 +5,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from src.cruds import admin_user_cruds
-from src.schemas.admin_user_schemas import AdminUserCreate, AdminUserUpdate, AdminUserRead # CORREÇÃO: AdminUserInDB renomeado para AdminUserRead
+from src.schemas.admin_user_schemas import AdminUserCreate, AdminUserUpdate, AdminUserRead 
 from src.db.database import get_db
-# CORREÇÃO: Usar get_current_user_from_token diretamente ou ter um get_current_admin_user que retorne TokenData
 from src.dependencies.oauth2 import get_current_user_from_token
 from src.schemas.token_schemas import TokenData # Importar TokenData para tipagem
 

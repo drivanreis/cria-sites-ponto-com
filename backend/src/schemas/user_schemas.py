@@ -1,37 +1,22 @@
 # File: backend/src/schemas/user_schemas.py
 
-from pydantic import BaseModel, EmailStr, Field, model_validator, field_validator, ValidationInfo
-from typing import Optional, Any
-import re # Para validação de Regex no telefone
+import re # Pode ser removido se não for usado para mais nada neste arquivo
+from pydantic import BaseModel, EmailStr, Field, model_validator, field_validator
+from typing import Optional
+from src.utils.validate_password import validate_password_complexity # Importa a validação de senha
+from src.utils.validate_phone_number import validate_phone_number_format # Importa a validação de telefone
 
-# Esquema Base com campos comuns para entrada e saída que refletem o modelo
-# Usado para herança para evitar duplicação de campos
 class UserBase(BaseModel):
     name: str = Field(..., min_length=3, max_length=255)
     email: Optional[EmailStr] = Field(None, max_length=255)
     phone_number: Optional[str] = Field(None, max_length=20) # Corrigido max_length para 20 (modelo)
 
-    # NOVIDADE: Validador para formato do telefone
+    # NOVIDADE: Validador para formato do telefone - AGORA CHAMANDO A FUNÇÃO EXTERNA
     @field_validator('phone_number')
     @classmethod
-    def validate_phone_number_format(cls, value: Optional[str]) -> Optional[str]:
-        if value is None:
-            return value
-        # Regex mais robusto para telefones brasileiros com ou sem DDI/DDD.
-        # Ex: +5511987654321, 11987654321, 9876543210
-        # Permite: + (opcional), 2 digitos (DDI opcional), 2 digitos (DDD opcional), 8-9 digitos (numero)
-        # ^\\+?              -> Opcional +
-        # (?:\\d{2})?        -> Opcional DDI (2 dígitos, não captura)
-        # (?:\\d{2})?        -> Opcional DDD (2 dígitos, não captura)
-        # \\d{8,9}$          -> Número (8 ou 9 dígitos no final)
-        # Esta regex é mais flexível para números de telefone brasileiros com ou sem DDD/DDI.
-        # Ajuste se precisar de um formato mais estrito (ex: apenas DDD com 2 digitos).
-        phone_regex = r"^\+?(?:[0-9]{2})?(?:[0-9]{2})?[0-9]{8,9}$"
-        
-        if not re.fullmatch(phone_regex, value):
-            raise ValueError("Formato de telefone inválido. Use apenas números e opcionalmente '+' no início.")
-        
-        return value
+    def validate_user_phone_number_field(cls, value: Optional[str]) -> Optional[str]:
+        # Chama a função de validação de telefone do arquivo utils
+        return validate_phone_number_format(value)
 
 
 # Esquema para criação de usuário (entrada da API)
@@ -46,19 +31,8 @@ class UserCreate(UserBase):
 
     @field_validator('password')
     @classmethod
-    def validate_password_complexity(cls, value: str) -> str:
-        if len(value) < 6:
-            raise ValueError('A senha deve ter pelo menos 6 caracteres.')
-        if not re.search(r"[A-Z]", value):
-            raise ValueError('A senha deve conter pelo menos uma letra maiúscula.')
-        if not re.search(r"[a-z]", value):
-            raise ValueError('A senha deve conter pelo menos uma letra minúscula.')
-        if not re.search(r"[0-9]", value):
-            raise ValueError('A senha deve conter pelo menos um dígito.')
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", value):
-            raise ValueError('A senha deve conter pelo menos um caractere especial.')
-        return value
-
+    def validate_password_field(cls, value: str) -> str:
+        return validate_password_complexity(value)
 
 # Esquema para atualização de usuário (entrada da API)
 # Todos os campos são opcionais para permitir atualizações parciais
@@ -72,22 +46,17 @@ class UserUpdate(UserBase):
     def validate_password_complexity_for_update(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
             return value
-        # Reutilizar o validador de criação
-        return UserCreate.validate_password_complexity(value) 
-
+        return validate_password_complexity(value)
 
 # Esquema para representação de usuário no banco de dados (saída da API)
 # Corrigido o nome para UserRead e alinhado os tipos de data
 class UserRead(UserBase):
     id: int
     email_verified: bool
-    # password_hash: Optional[str] = None # REMOVIDO: NUNCA expor o hash da senha
-    # two_factor_secret: Optional[str] = None # REMOVIDO: NUNCA expor o segredo 2FA
     google_id: Optional[str] = None
     github_id: Optional[str] = None
     is_two_factor_enabled: bool
     status: str
-    # CORREÇÃO: Datas como string, conforme o modelo (String(19))
     creation_date: str # O modelo armazena como String(19)
     last_login: Optional[str] = None # O modelo armazena como String(19)
 

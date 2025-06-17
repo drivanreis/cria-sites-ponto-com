@@ -19,12 +19,12 @@ def get_employee_by_id(db: Session, employee_id: int) -> Optional[Employee]:
     logger.info(f"Buscando funcionário com ID: {employee_id}")
     return db.query(Employee).filter(Employee.id == employee_id).first()
 
-def get_employee_by_name(db: Session, sender_type: str) -> Optional[Employee]:
+def get_employee_by_name(db: Session, employee_name: str) -> Optional[Employee]:
     """
-    Busca um funcionário pelo seu nome (sender_type).
+    Busca um funcionário pelo seu nome (employee_name).
     """
-    logger.info(f"Buscando funcionário com nome: '{sender_type}'")
-    return db.query(Employee).filter(Employee.sender_type == sender_type).first()
+    logger.info(f"Buscando funcionário com nome: '{employee_name}'")
+    return db.query(Employee).filter(Employee.employee_name == employee_name).first()
 
 def get_all_employees(db: Session, skip: int = 0, limit: int = 100) -> List[Employee]:
     """
@@ -38,10 +38,10 @@ def create_employee_initial(db: Session, employee_data: EmployeeCreateInternal) 
     Cria um novo registro de funcionário no banco de dados.
     Esta função é destinada à inicialização da aplicação, não a uma rota POST.
     """
-    logger.info(f"Tentando criar funcionário inicial: '{employee_data.sender_type}'")
+    logger.info(f"Tentando criar funcionário inicial: '{employee_data.employee_name}'")
     
     db_employee = Employee(
-        sender_type=employee_data.sender_type,
+        employee_name=employee_data.employee_name,
         employee_script=employee_data.employee_script,
         ia_name=employee_data.ia_name,
         endpoint_url=employee_data.endpoint_url,
@@ -54,21 +54,21 @@ def create_employee_initial(db: Session, employee_data: EmployeeCreateInternal) 
         db.add(db_employee)
         db.commit()
         db.refresh(db_employee)
-        logger.info(f"Funcionário '{db_employee.sender_type}' criado com sucesso.")
+        logger.info(f"Funcionário '{db_employee.employee_name}' criado com sucesso.")
         return db_employee
     except exc.IntegrityError:
         db.rollback()
-        logger.warning(f"Tentativa de criar funcionário com nome duplicado: '{employee_data.sender_type}'")
+        logger.warning(f"Tentativa de criar funcionário com nome duplicado: '{employee_data.employee_name}'")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Employee with this name already exists.")
     except Exception as e:
         db.rollback()
-        logger.error(f"Erro inesperado ao criar funcionário '{employee_data.sender_type}': {e}")
+        logger.error(f"Erro inesperado ao criar funcionário '{employee_data.employee_name}': {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro interno do servidor ao criar funcionário: {e}")
 
 def update_employee(db: Session, employee_id: int, employee_update_data: EmployeeUpdate) -> Optional[Employee]:
     """
     Atualiza um registro de funcionário existente.
-    O campo 'sender_type' não pode ser atualizado via esta função.
+    O campo 'employee_name' não pode ser atualizado via esta função.
     """
     logger.info(f"Tentando atualizar funcionário ID: {employee_id}")
     db_employee = db.query(Employee).filter(Employee.id == employee_id).first()
@@ -78,9 +78,9 @@ def update_employee(db: Session, employee_id: int, employee_update_data: Employe
 
     update_data = employee_update_data.model_dump(exclude_unset=True)
 
-    if "sender_type" in update_data:
+    if "employee_name" in update_data:
         logger.warning(f"Tentativa de atualizar o nome do funcionário ID {employee_id}. Ignorando.")
-        del update_data["sender_type"]
+        del update_data["employee_name"]
 
     for key, value in update_data.items():
         setattr(db_employee, key, value)

@@ -61,7 +61,7 @@ def update_existing_employee(
     current_admin_user: Dict[str, Any] = Depends(get_current_admin_user) # APENAS ADMIN PODE ATUALIZAR EMPLOYEES
 ):
     """
-    Atualiza um funcionário existente. O campo 'sender_type' não pode ser modificado.
+    Atualiza um funcionário existente. O campo 'employee_name' não pode ser modificado.
     Rota protegida: Apenas administradores podem acessar.
     """
     # Use o método do crud, não um método no schema
@@ -98,12 +98,12 @@ async def test_all_ai_connections(
             )
             # Verifica se a resposta não é vazia e não é um erro óbvio da IA
             if response_text and len(response_text.strip()) > 0 and "error" not in response_text.lower():
-                results[employee.sender_type] = "OK"
+                results[employee.employee_name] = "OK"
             else:
-                results[employee.sender_type] = f"Failed (Resposta da IA: '{response_text.strip()[:100]}...')"
+                results[employee.employee_name] = f"Failed (Resposta da IA: '{response_text.strip()[:100]}...')"
         except HTTPException as e:
-            results[employee.sender_type] = f"Failed (HTTP Error: {e.detail})"
+            results[employee.employee_name] = f"Failed (HTTP Error: {e.detail})"
         except Exception as e:
-            results[employee.sender_type] = f"Failed (Erro inesperado: {str(e)})"
+            results[employee.employee_name] = f"Failed (Erro inesperado: {str(e)})"
     
     return results

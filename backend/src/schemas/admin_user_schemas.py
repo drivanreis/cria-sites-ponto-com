@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
-import re # Para validação de Regex em caracteres especiais da senha
+from src.utils.validate_password import validate_password_complexity
 
 # Esquema Base para AdminUser
 class AdminUserBase(BaseModel):
@@ -10,37 +10,19 @@ class AdminUserBase(BaseModel):
 
 # Esquema para criação de um novo AdminUser (inclui a senha em texto claro)
 class AdminUserCreate(AdminUserBase):
-    # CORREÇÃO: Aumentar min_length para 8 (ou mais) e max_length para 255 (ou mais)
-    # para permitir senhas mais longas e seguras.
-    password: str = Field(..., min_length=8, max_length=255) 
+    password: str = Field(..., min_length=6, max_length=255) 
 
     @field_validator('password')
     @classmethod
-    def validate_password_complexity(cls, value: str) -> str:
-        if len(value) < 8: # Reforça o min_length também no validador
-            raise ValueError('A senha deve ter pelo menos 8 caracteres.')
-        if not any(char.isdigit() for char in value):
-            raise ValueError('A senha deve conter pelo menos um número.')
-        if not any(char.isupper() for char in value):
-            raise ValueError('A senha deve conter pelo menos uma letra maiúscula.')
-        if not any(char.islower() for char in value):
-            raise ValueError('A senha deve conter pelo menos uma letra minúscula.')
-        
-        # O seu regex estava bom, apenas uma pequena melhoria para incluir mais caracteres comuns.
-        # Use r'[]' para caracteres especiais.
-        special_chars_pattern = r'[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]'
-        if not re.search(special_chars_pattern, value):
-            raise ValueError(f'A senha deve conter pelo menos um caractere especial: {special_chars_pattern.replace("[", "").replace("]", "")}.')
-        return value
-
+    def validate_password_field(cls, value: str) -> str:
+        # Chama a função de validação externa
+        return validate_password_complexity(value)
+    
 # Esquema para atualização de um AdminUser existente (todos os campos são opcionais)
 class AdminUserUpdate(BaseModel):
     username: Optional[str] = Field(None, max_length=255)
-    # CORREÇÃO: Manter consistência com a criação, permitindo senhas mais longas na atualização
-    password: Optional[str] = Field(None, min_length=8, max_length=255) 
-    # Adicionado 2FA update (opcional)
+    password: Optional[str] = Field(None, min_length=6, max_length=255) 
     is_two_factor_enabled: Optional[bool] = None
-
 
     @field_validator('password')
     @classmethod
@@ -48,7 +30,7 @@ class AdminUserUpdate(BaseModel):
         if value is None:
             return value
         # Reutiliza o validador de complexidade da criação
-        return AdminUserCreate.validate_password_complexity(value)
+        return validate_password_complexity(value)
 
 # Esquema para representação de um AdminUser no banco de dados (saída da API)
 # CORREÇÃO: Renomeado AdminUserInDB para AdminUserRead para clareza

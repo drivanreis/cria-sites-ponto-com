@@ -31,9 +31,9 @@ def test_get_all_employees_as_admin(client: TestClient, db_session_override: Ses
     assert len(data) >= 2 # Pode haver outros funcionários da inicialização
     
     # Verifica se os funcionários criados estão na lista
-    sender_types = [emp["sender_type"] for emp in data]
-    assert employee1.sender_type in sender_types
-    assert employee2.sender_type in sender_types
+    employee_names = [emp["employee_name"] for emp in data]
+    assert employee1.employee_name in employee_names
+    assert employee2.employee_name in employee_names
 
 def test_get_employee_by_id_as_admin(client: TestClient, db_session_override: Session):
     """
@@ -52,7 +52,7 @@ def test_get_employee_by_id_as_admin(client: TestClient, db_session_override: Se
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == test_employee.id
-    assert data["sender_type"] == test_employee.sender_type
+    assert data["employee_name"] == test_employee.employee_name
     assert "employee_script" in data
     assert "ia_name" in data
 
@@ -101,7 +101,7 @@ def test_update_employee_as_admin(client: TestClient, db_session_override: Sessi
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == employee_to_update.id
-    assert data["sender_type"] == employee_to_update.sender_type # sender_type NÃO deve mudar
+    assert data["employee_name"] == employee_to_update.employee_name # employee_name NÃO deve mudar
     assert data["ia_name"] == updated_data["ia_name"]
     assert data["endpoint_key"] == updated_data["endpoint_key"]
     assert data["employee_script"] == updated_data["employee_script"]
@@ -113,9 +113,9 @@ def test_update_employee_as_admin(client: TestClient, db_session_override: Sessi
     assert updated_db_employee.endpoint_key == updated_data["endpoint_key"]
     assert updated_db_employee.employee_script == updated_data["employee_script"]
 
-def test_update_sender_type_is_ignored(client: TestClient, db_session_override: Session):
+def test_update_employee_name_is_ignored(client: TestClient, db_session_override: Session):
     """
-    Testa se a tentativa de atualizar 'sender_type' é IGNORADA e retorna 200.
+    Testa se a tentativa de atualizar 'employee_name' é IGNORADA e retorna 200.
     A validação do schema permite o campo, mas o CRUD o ignora.
     """
     admin_password = "AdminEmployeeNoNameChange!"
@@ -126,7 +126,7 @@ def test_update_sender_type_is_ignored(client: TestClient, db_session_override: 
     employee_to_update = create_test_employee(db_session_override, "Original Name", ia_name="InitialIA")
 
     updated_data_with_ignored_field = {
-        "sender_type": "New Forbidden Name", # Este campo deve ser ignorado pelo CRUD
+        "employee_name": "New Forbidden Name", # Este campo deve ser ignorado pelo CRUD
         "ia_name": "UpdatedIA" # Este campo deve ser atualizado
     }
 
@@ -139,12 +139,12 @@ def test_update_sender_type_is_ignored(client: TestClient, db_session_override: 
     # Agora esperamos 200, pois o CRUD lida com isso.
     assert response.status_code == 200
     data = response.json()
-    assert data["sender_type"] == "Original Name" # Confirma que não foi alterado na resposta
+    assert data["employee_name"] == "Original Name" # Confirma que não foi alterado na resposta
     assert data["ia_name"] == "UpdatedIA" # Confirma que outro campo foi atualizado
 
     # Verifique no banco de dados que o nome NÃO foi alterado e outros campos foram.
     db_employee_after_attempt = db_session_override.query(Employee).filter(Employee.id == employee_to_update.id).first()
-    assert db_employee_after_attempt.sender_type == "Original Name"
+    assert db_employee_after_attempt.employee_name == "Original Name"
     assert db_employee_after_attempt.ia_name == "UpdatedIA"
 
 

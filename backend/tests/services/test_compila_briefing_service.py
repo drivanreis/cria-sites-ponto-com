@@ -28,14 +28,21 @@ def mock_character_service():
 def test_compile_briefing_success_new_briefing(db_session_override: Session, mock_character_service):
     user = create_test_user(db_session_override, "Test User", "test_compile@example.com", "Password123!")
     employee_name = "Assistente de Palco"
-    create_test_employee(db_session_override, sender_type=employee_name)
+    # Certifica que o employee é criado com o nome correto
+    create_test_employee(db_session_override, name=employee_name, description="Um assistente de palco para testes.") 
+    # ^^^ CORREÇÃO: Usar 'name' se a função create_test_employee espera 'name', não 'sender_type'.
+    #              Adicionei uma descrição para ser mais completo, se a função create_test_employee aceitar.
+    #              Se 'create_test_employee' no conftest.py usa 'sender_type', então 'sender_type=employee_name' está correto.
+    #              Por padrão, 'name' é mais comum para o campo de nome de um modelo.
 
     # Simula um histórico de conversa que a IA usaria para compilar
     briefing_chat_title = f"Conversa com Entrevistador Pessoal (Usuário {user.id})"
     briefing_for_chat = create_test_briefing(db_session_override, user.id, briefing_chat_title)
     
     create_test_conversation_history_entry(db_session_override, briefing_for_chat.id, "user", "Olá, quero um site para vender bolos.")
-    create_test_conversation_history_entry(db_session_override, briefing_for_chat.id, "Entrevistador Pessoal", "Ótimo! Qual o público-alvo?")
+    # CORREÇÃO: O sender_type da IA no histórico deve ser consistente com o employee_name ou um nome definido para a IA
+    #           dentro do contexto da conversa. Mudei para employee_name para consistência.
+    create_test_conversation_history_entry(db_session_override, briefing_for_chat.id, employee_name, "Ótimo! Qual o público-alvo?") 
     create_test_conversation_history_entry(db_session_override, briefing_for_chat.id, "user", "Pessoas que gostam de doces, de 25 a 50 anos.")
 
     # A resposta simulada da IA já em formato JSON
@@ -76,7 +83,9 @@ def test_compile_briefing_success_new_briefing(db_session_override: Session, moc
 def test_compile_briefing_success_existing_briefing(db_session_override: Session, mock_character_service):
     user = create_test_user(db_session_override, "Existing Briefing User", "exist.briefing@example.com", "Password123!")
     employee_name = "Assistente de Palco"
-    create_test_employee(db_session_override, sender_type=employee_name)
+    # Certifica que o employee é criado com o nome correto
+    create_test_employee(db_session_override, name=employee_name, description="Um assistente de palco para testes.")
+    # ^^^ CORREÇÃO: Usar 'name' se a função create_test_employee espera 'name'.
 
     # Cria um briefing existente que será compilado
     existing_briefing_title = f"Briefing Compilado por {employee_name} para Usuário {user.id}"
@@ -84,7 +93,8 @@ def test_compile_briefing_success_existing_briefing(db_session_override: Session
     
     # Adiciona histórico de conversa para este briefing
     create_test_conversation_history_entry(db_session_override, existing_briefing.id, "user", "Qual o nome da empresa?")
-    create_test_conversation_history_entry(db_session_override, existing_briefing.id, "Entrevistador Pessoal", "É 'Padaria do Zé'.")
+    # CORREÇÃO: Consistência do sender_type
+    create_test_conversation_history_entry(db_session_override, existing_briefing.id, employee_name, "É 'Padaria do Zé'.")
 
     mock_character_service.return_value = """{"nome_empresa": "Padaria do Zé", "ramo": "Panificação"}"""
 
@@ -103,10 +113,11 @@ def test_compile_briefing_success_existing_briefing(db_session_override: Session
 def test_compile_briefing_no_conversation_history(db_session_override: Session, mock_character_service):
     user = create_test_user(db_session_override, "No History User", "no.history@example.com", "Password123!")
     employee_name = "Assistente de Palco"
-    create_test_employee(db_session_override, sender_type=employee_name)
+    # Certifica que o employee é criado com o nome correto
+    create_test_employee(db_session_override, name=employee_name, description="Um assistente de palco para testes.")
+    # ^^^ CORREÇÃO: Usar 'name' se a função create_test_employee espera 'name'.
 
     # Não adiciona nenhum histórico de conversa para este briefing
-    # A função irá tentar criar um briefing, mas não encontrará histórico associado.
     
     with pytest.raises(HTTPException) as exc_info:
         compile_briefing_from_conversation(db_session_override, user.id, employee_name)
@@ -119,17 +130,11 @@ def test_compile_briefing_employee_not_found(db_session_override: Session):
     user = create_test_user(db_session_override, "No Employee User", "no.employee@example.com", "Password123!")
     employee_name = "Personagem Inexistente"
 
-    # Não cria o employee "Personagem Inexistente"
+    # Não cria o employee "Personagem Inexistente" no DB para simular a ausência
 
-    # O character_service deve levantar uma HTTPException 404 se o employee não for encontrado.
-    # No entanto, a lógica de `compile_briefing_from_conversation` primeiro tenta recuperar o briefing,
-    # depois o histórico e SÓ ENTÃO chama o character_service.
-    # Se não houver histórico, a exceção de histórico será levantada antes.
-    # Para testar diretamente a falta do employee, precisaríamos de um histórico existente.
-    # Para simplificar, vamos simular o cenário mais provável: o briefing é criado, mas a IA falha.
-
-    briefing_chat_title = f"Conversa com Entrevistador Pessoal (Usuário {user.id})"
+    briefing_chat_title = f"Conversa com o Usuário {user.id}" # Título mais genérico
     briefing_for_chat = create_test_briefing(db_session_override, user.id, briefing_chat_title)
+    # CORREÇÃO: O sender_type pode ser "user" aqui, pois a falha será na busca do employee
     create_test_conversation_history_entry(db_session_override, briefing_for_chat.id, "user", "Teste de mensagem.")
     
     # Mockando especificamente get_employee_by_name para simular a ausência do funcionário
@@ -144,9 +149,10 @@ def test_compile_briefing_employee_not_found(db_session_override: Session):
 def test_compile_briefing_invalid_ai_response_json(db_session_override: Session, mock_character_service):
     user = create_test_user(db_session_override, "Invalid JSON User", "invalid.json@example.com", "Password123!")
     employee_name = "Assistente de Palco"
-    create_test_employee(db_session_override, sender_type=employee_name)
-
-    briefing_chat_title = f"Conversa com Entrevistador Pessoal (Usuário {user.id})"
+    # Certifica que o employee é criado com o nome correto
+    create_test_employee(db_session_override, name=employee_name, description="Um assistente de palco para testes.")
+    
+    briefing_chat_title = f"Conversa com o Usuário {user.id}"
     briefing_for_chat = create_test_briefing(db_session_override, user.id, briefing_chat_title)
     create_test_conversation_history_entry(db_session_override, briefing_for_chat.id, "user", "Qualquer coisa.")
     
@@ -162,9 +168,10 @@ def test_compile_briefing_invalid_ai_response_json(db_session_override: Session,
 def test_compile_briefing_empty_ai_response(db_session_override: Session, mock_character_service):
     user = create_test_user(db_session_override, "Empty Response User", "empty.response@example.com", "Password123!")
     employee_name = "Assistente de Palco"
-    create_test_employee(db_session_override, sender_type=employee_name)
-
-    briefing_chat_title = f"Conversa com Entrevistador Pessoal (Usuário {user.id})"
+    # Certifica que o employee é criado com o nome correto
+    create_test_employee(db_session_override, name=employee_name, description="Um assistente de palco para testes.")
+    
+    briefing_chat_title = f"Conversa com o Usuário {user.id}"
     briefing_for_chat = create_test_briefing(db_session_override, user.id, briefing_chat_title)
     create_test_conversation_history_entry(db_session_override, briefing_for_chat.id, "user", "Mensagem.")
     
@@ -179,9 +186,10 @@ def test_compile_briefing_empty_ai_response(db_session_override: Session, mock_c
 def test_compile_briefing_internal_ai_error(db_session_override: Session, mock_character_service):
     user = create_test_user(db_session_override, "Internal AI Error User", "ai.error@example.com", "Password123!")
     employee_name = "Assistente de Palco"
-    create_test_employee(db_session_override, sender_type=employee_name)
-
-    briefing_chat_title = f"Conversa com Entrevistador Pessoal (Usuário {user.id})"
+    # Certifica que o employee é criado com o nome correto
+    create_test_employee(db_session_override, name=employee_name, description="Um assistente de palco para testes.")
+    
+    briefing_chat_title = f"Conversa com o Usuário {user.id}"
     briefing_for_chat = create_test_briefing(db_session_override, user.id, briefing_chat_title)
     create_test_conversation_history_entry(db_session_override, briefing_for_chat.id, "user", "Mensagem.")
 

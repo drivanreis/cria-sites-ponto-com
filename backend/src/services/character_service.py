@@ -41,11 +41,11 @@ async def get_ai_response_for_character(
     if conversation_history:
         history_parts = []
         for entry in conversation_history:
-            # AQUI: entry.sender_type agora pode ser 'user' ou o 'employee_name'
+            # AQUI: entry.employee_name agora pode ser User.nickname ou o Employee.employee_name
             # Se for o próprio employee_name, podemos rotular como 'AI' ou 'Personagem'
             # para o prompt, ou manter o nome para mais clareza no contexto da IA.
             # Vou usar capitalize para o 'user' e manter o nome do employee para a AI.
-            sender_display = entry.sender_type.capitalize() if entry.sender_type == 'user' else employee_name
+            sender_display = entry.employee_name.capitalize() if entry.employee_name == 'user' else employee_name
             history_parts.append(f"{sender_display}: {entry.message_content}")
         history_string = "\n".join(history_parts)
         if history_string:

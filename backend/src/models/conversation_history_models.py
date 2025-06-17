@@ -10,7 +10,7 @@ class ConversationHistory(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     briefing_id = Column(Integer, ForeignKey('briefings.id'), nullable=False) # Chave estrangeira para o briefing
-    sender_type = Column(String(20), nullable=False, default='User') # Tipo do remetente: 'User' ou 'employee_name'
+    sender_type = Column(String(30), nullable=False, default='User') # Tipo do remetente: 'users.nickname' ou 'employees.employee_name'
     message_content = Column(Text, nullable=False) # Conteúdo da mensagem. Usar Text para mensagens longas.
     timestamp = Column(String(19), nullable=False) # Data e hora da mensagem
 

@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any # Dict e Any são usados em BriefingReque
 from datetime import datetime # Importação não utilizada diretamente para tipagem dos campos.
 
 class ConversationHistoryBase(BaseModel):
-    sender_type: str = Field(..., max_length=50, description="Tipo do remetente: 'user' ou o nome do employee (ex: 'Entrevistador Pessoal').")
+    sender_type: str = Field(..., max_length=30, description="Tipo do remetente: 'User.nickname' ou Employee.employee_name(ex: 'Entrevistador Pessoal').")
     message_content: str
 
 class ConversationHistoryCreate(ConversationHistoryBase):

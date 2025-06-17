@@ -8,7 +8,7 @@ class Employee(Base):
     __tablename__ = 'employees'
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    sender_type = Column(String(30), unique=True, nullable=False) # O nome personagem (Entrevistador Pessoal, etc.)
+    employee_name = Column(String(30), unique=True, nullable=False) # O nome personagem (Entrevistador Pessoal, etc.)
     employee_script = Column(JSON, nullable=False) # Roteiro do personagem
     ia_name = Column(String(30), nullable=False) # Nome do assistente de IA "ator" (ChatGPT, Gemini, DeepSeek)
     endpoint_url = Column(String(255), nullable=False) # URL base da API de IA
@@ -18,4 +18,4 @@ class Employee(Base):
     last_update = Column(String(19), nullable=True)
 
     def __repr__(self):
-        return f"<Employee(id={self.id}, sender_type='{self.sender_type}', last_update='{self.last_update}')>"
+        return f"<Employee(id={self.id}, employee_name='{self.employee_name}', last_update='{self.last_update}')>"
