@@ -58,6 +58,20 @@ services:
       timeout: 10s
       retries: 5
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    # ATENÇÃO: REMOVA OU COMENTE ESTA SEÇÃO DE VOLUMES PARA O FRONTEND
+    # volumes:
+    #   - ./frontend:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment: # Adicione esta seção para a comunicação com o backend
+      VITE_API_BASE_URL: http://backend:8000
+
 volumes:
   db_data: # Define um volume nomeado para persistir os dados do MySQL
 

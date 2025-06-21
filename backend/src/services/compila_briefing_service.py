@@ -16,132 +16,100 @@ logger = logging.getLogger(__name__)
 async def compile_briefing_content(
     db: Session,
     briefing_id: int,
-    user_id: int # Para validação de propriedade do briefing
+    user_id: int
 ) -> Dict[str, Any]:
     """
-    Aciona o 'Assistente de Palco' para compilar o histórico de conversa
-    em um formato JSON e salva no campo 'content' do briefing.
-    As instruções para a IA são extraídas do employee_script do Assistente de Palco.
+    Compila o briefing via 'Assistente de Palco' e salva no campo 'content' do briefing.
     """
-    logger.info(f"Iniciando compilação de briefing para ID: {briefing_id} por user_id: {user_id}")
+    logger.info(f"Compilando briefing — briefing_id: {briefing_id}, user_id: {user_id}")
 
-    # 1. Validar e obter o briefing
     briefing = briefing_cruds.get_briefing(db, briefing_id)
     if not briefing:
-        logger.warning(f"Briefing com ID {briefing_id} não encontrado para compilação.")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Briefing com ID {briefing_id} não encontrado."
-        )
+        logger.warning(f"Briefing {briefing_id} não encontrado.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Briefing {briefing_id} não encontrado.")
+
     if briefing.user_id != user_id:
         logger.warning(f"Usuário {user_id} tentou compilar briefing {briefing_id} de outro usuário.")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Você não tem permissão para compilar este briefing."
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Sem permissão para compilar este briefing.")
 
-    # 2. Obter o funcionário 'Assistente de Palco'
     assistant_employee_name = "Assistente de Palco"
     assistant_employee = employee_cruds.get_employee_by_name(db, assistant_employee_name)
 
     if not assistant_employee:
-        logger.error(f"Funcionário de IA '{assistant_employee_name}' não encontrado para compilação.")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Funcionário de IA '{assistant_employee_name}' (Assistente de Palco) não configurado no sistema."
-        )
+        logger.error(f"Personagem '{assistant_employee_name}' não encontrado.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Personagem '{assistant_employee_name}' não encontrado.")
 
-    # Validar que o employee_script possui 'context'
-    if not isinstance(assistant_employee.employee_script, dict) or \
-       'context' not in assistant_employee.employee_script:
-        logger.error(f"employee_script inválido para '{assistant_employee_name}': {assistant_employee.employee_script}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Configuração do funcionário de IA '{assistant_employee_name}' inválida: employee_script sem 'context'."
-        )
+    if not isinstance(assistant_employee.employee_script, dict) or 'context' not in assistant_employee.employee_script:
+        logger.error(f"Script inválido para '{assistant_employee_name}'.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Script inválido para '{assistant_employee_name}'.")
 
-    # 3. Recuperar todo o histórico de conversas do briefing
-    full_conversation_history = conversation_history_cruds.get_conversation_history_by_briefing_id(
-        db, briefing_id=briefing_id, limit=500 # Aumentar o limite para compilação completa
+    # --- Obter histórico completo da conversa ---
+    history_entries = conversation_history_cruds.get_conversation_history_by_briefing_id(db, briefing_id, limit=500)
+
+    if not history_entries:
+        logger.warning(f"Sem histórico para briefing {briefing_id}. Não é possível compilar.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sem histórico para compilar.")
+
+    formatted_user_prompt = "\n".join(
+        f"{entry.sender_type}: {entry.message_content}"
+        for entry in history_entries
     )
 
-    if not full_conversation_history:
-        logger.warning(f"Nenhum histórico de conversa encontrado para briefing_id: {briefing_id}. Não é possível compilar.")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Nenhum histórico de conversa para compilar neste briefing."
-        )
+    system_prompt = f"Contexto do seu papel: {assistant_employee.employee_script['context']}"
 
-    # 4. Construir o prompt completo para o 'Assistente de Palco'
-    # O prompt agora usa o 'context' do employee_script para as instruções principais da IA.
-    compilation_prompt_parts = [f"Contexto do seu papel: {assistant_employee.employee_script['context']}"]
-
-    compilation_prompt_parts.append("\n--- Histórico da Conversa para Compilação ---")
-    for entry in full_conversation_history:
-        compilation_prompt_parts.append(f"{entry.sender_type}: {entry.message_content}")
-    compilation_prompt_parts.append("--- Fim do Histórico ---")
-
-    final_compilation_prompt = "\n".join(compilation_prompt_parts)
-
-    # 5. Chamar a API externa da IA para compilação
+    # --- Chamar IA ---
     try:
         raw_ai_response = await call_external_ai_api(
             endpoint_url=assistant_employee.endpoint_url,
             endpoint_key=assistant_employee.endpoint_key,
             headers_template=assistant_employee.headers_template,
             body_template=assistant_employee.body_template,
-            prompt_content=final_compilation_prompt,
+            system_prompt=system_prompt,
+            user_prompt=formatted_user_prompt,
             ia_name=assistant_employee.ia_name
         )
-        logger.info(f"Resposta bruta da IA para compilação recebida: {raw_ai_response[:100]}...")
-    except Exception as e:
-        logger.error(f"Erro ao chamar a IA para compilação do briefing {briefing_id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro interno do servidor ao compilar o briefing: {e}"
-        )
+        logger.info(f"Resposta da IA para compilação: {raw_ai_response[:100]}...")
 
-    # 6. Processar e validar a resposta JSON da IA
+    except Exception as e:
+        logger.error(f"Erro ao compilar briefing {briefing_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro ao compilar briefing: {e}")
+
+    # --- Processar resposta (JSON) ---
     briefing_content_json: Optional[Dict[str, Any]] = None
     try:
-        # Tentar extrair apenas o JSON se a IA incluir texto extra ou Markdown
         json_start = raw_ai_response.find('{')
         json_end = raw_ai_response.rfind('}')
         if json_start != -1 and json_end != -1 and json_end > json_start:
-            json_str = raw_ai_response[json_start : json_end + 1]
+            json_str = raw_ai_response[json_start:json_end + 1]
             briefing_content_json = json.loads(json_str)
         else:
-            # Se não encontrar chaves de JSON, tentar parsear a resposta inteira
             briefing_content_json = json.loads(raw_ai_response)
 
-        logger.info(f"Briefing content JSON parsado com sucesso para briefing {briefing_id}.")
-    except json.JSONDecodeError as e:
-        logger.error(f"Erro ao decodificar JSON da resposta da IA para briefing {briefing_id}: {e} - Resposta: {raw_ai_response}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"A IA não retornou um formato JSON válido para o briefing. Erro: {e}"
-        )
-    except Exception as e:
-        logger.error(f"Erro inesperado ao processar resposta JSON da IA para briefing {briefing_id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro inesperado ao processar a resposta da IA para o briefing: {e}"
-        )
+        logger.info(f"Briefing {briefing_id} — JSON decodificado com sucesso.")
 
-    # 7. Salvar o conteúdo compilado no briefing
-    briefing_update_data = BriefingUpdate(
+    except json.JSONDecodeError as e:
+        logger.error(f"Erro de JSON no briefing {briefing_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Resposta da IA não é um JSON válido: {e}")
+
+    except Exception as e:
+        logger.error(f"Erro inesperado ao processar resposta da IA — briefing {briefing_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro inesperado na resposta da IA: {e}")
+
+    # --- Salvar briefing ---
+    briefing_update = BriefingUpdate(
         content=briefing_content_json,
-        status="Compilado" # Atualiza o status do briefing
+        status="Compilado"
     )
-    # Note: briefing_cruds.update_briefing espera briefing_id como primeiro argumento após db.
-    updated_briefing = briefing_cruds.update_briefing(db, briefing.id, briefing_update_data, last_edited_by=assistant_employee_name)
+    updated_briefing = briefing_cruds.update_briefing(db, briefing.id, briefing_update, last_edited_by=assistant_employee_name)
 
     if not updated_briefing:
-        logger.error(f"Falha ao atualizar briefing {briefing_id} com conteúdo compilado.")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro ao salvar o briefing compilado."
-        )
+        logger.error(f"Falha ao salvar briefing {briefing_id}.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro ao salvar briefing compilado.")
 
-    logger.info(f"Briefing ID {briefing_id} compilado e salvo com sucesso.")
-    return {"message": "Briefing compilado com sucesso!", "briefing_id": briefing_id, "content": briefing_content_json}
+    logger.info(f"Briefing {briefing_id} compilado e salvo.")
+
+    return {
+        "message": "Briefing compilado com sucesso!",
+        "briefing_id": briefing_id,
+        "content": briefing_content_json
+    }

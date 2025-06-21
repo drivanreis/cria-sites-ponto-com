@@ -6,6 +6,7 @@ import os
 import sys
 from src.db.database import get_db, Session
 import time
+from src.utils.datetime_utils import get_current_datetime_str
 
 from src.middlewares.cors import CORS_MIDDLEWARE_SETTINGS
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,7 +69,8 @@ app.include_router(auth_routers.router)
 
 @app.get("/")
 def read_root():
-    return {"message": "Bem-vindo à API Cria Sites .com!"}
+    return {"message": "Bem-vindo à API Cria Sites Ponto Com!"
+    " Seu horário atual é: " + get_current_datetime_str()}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

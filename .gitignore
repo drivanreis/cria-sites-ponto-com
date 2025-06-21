@@ -35,3 +35,10 @@ uploads/
 # Ignorar arquivos específicos do sistema operacional
 .DS_Store
 Thumbs.db
+
+# Ignorar arquivos de cache do Python
+__pycache__/
+*.pyc
+# Ignorar arquivos de cache do pytest
+.cache/
+.pytest_cache
