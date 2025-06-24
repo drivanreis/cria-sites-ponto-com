@@ -69,8 +69,10 @@ app.include_router(auth_routers.router)
 
 @app.get("/")
 def read_root():
-    return {"message": "Bem-vindo à API Cria Sites Ponto Com!"
-    " Seu horário atual é: " + get_current_datetime_str()}
+    return {"message": "Bem-vindo ao Backend!"
+    " minha hora local é " + get_current_datetime_str()}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# /home/eu/.config/ngrok/ngrok.yml

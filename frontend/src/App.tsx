@@ -5,13 +5,19 @@ function App() {
   const [backendMessage, setBackendMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL // Equivalente 'http://localhost:8000';
 
   useEffect(() => {
     const fetchBackendMessage = async () => {
       try {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+        const response = await fetch(`${API_BASE_URL}/`, {
+          // *** AQUI É ONDE ADICIONAMOS O CABEÇALHO ***
+          headers: {
+            'ngrok-skip-browser-warning': 'true', // Este cabeçalho diz ao ngrok para pular a página de aviso
+            'Content-Type': 'application/json' // Geralmente é bom incluir para APIs JSON
+          }
+        });
 
-        const response = await fetch(`${API_BASE_URL}/`); // Faz a requisição para a rota raiz do seu backend
         if (!response.ok) {
           throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
         }
@@ -20,7 +26,7 @@ function App() {
       } catch (err) {
         console.error("Erro ao buscar mensagem do backend:", err);
         if (err instanceof Error) {
-          setError(`Falha ao conectar com o backend: ${err.message}. Verifique se o backend está rodando em ${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}`);
+          setError(`Falha ao conectar com o backend: ${err.message}. Verifique se o backend está rodando em API_BASE_URL: ${API_BASE_URL}`);
         } else {
           setError("Falha ao conectar com o backend: Erro desconhecido.");
         }
@@ -30,7 +36,7 @@ function App() {
     };
 
     fetchBackendMessage();
-  }, []); // O array vazio garante que o useEffect rode apenas uma vez, no montagem do componente
+  }, [API_BASE_URL]);
 
   if (loading) {
     return <div className="App">Carregando mensagem do backend...</div>;
@@ -42,9 +48,11 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Mensagem do seu Backend:</h1>
+      <h1>Bem-vindo!</h1>
+      <h2> ao Cria Sites Ponto Com!</h2>
+      <p>Se você vê a mensagem abaixo, a integração frontend-backend está funcionando!</p>
       <p>{backendMessage}</p>
-      <p>Se você vê a mensagem acima, a integração frontend-backend está funcionando!</p>
+      <p>Pelo endereço: {API_BASE_URL}</p>
       <p>Agora você pode começar a construir sua interface de usuário aqui.</p>
     </div>
   );

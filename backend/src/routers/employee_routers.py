@@ -9,7 +9,7 @@ from src.schemas.employee_schemas import EmployeeRead, EmployeeUpdate # Employee
 from src.db.database import get_db
 # from src.models.employee_models import Base, Employee # Base e Employee não são mais necessários aqui para startup_event
 from src.services import connect_ai_service # Necessário para test_ai_connections
-from src.dependencies.oauth2 import get_current_admin_user # Proteger as rotas de Employee
+from src.dependencies.oauth_file import get_current_admin_user # Proteger as rotas de Employee
 
 # CORRIGIDO: Adicionado prefix e tags para organização da API
 router = APIRouter(

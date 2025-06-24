@@ -9,7 +9,7 @@ from src.schemas.briefing_schemas import BriefingCreate, BriefingUpdate, Briefin
 from src.schemas.user_schemas import UserRead
 from src.cruds import briefing_cruds
 from src.services import chat_service, compila_briefing_service
-from src.dependencies.oauth2 import get_current_user_from_token
+from src.dependencies.oauth_file import get_current_user_from_token
 import logging
 
 logging.basicConfig(level=logging.INFO)

@@ -131,7 +131,7 @@ def client(db_session_override: Session):
 # Essas funções criam e persistem entidades diretamente no DB de teste.
 
 # CORREÇÃO CRÍTICA AQUI: Adicionar phone_number como Optional e passá-lo para UserCreate
-def create_test_user(db: Session, name: str, email: Optional[str] = None, password: str = "SecureP@ss1", phone_number: Optional[str] = None) -> src.models.User: # <--- MUDANÇA AQUI
+def create_test_user(db: Session, nickname: str, email: Optional[str] = None, password: str = "SecureP@ss1", phone_number: Optional[str] = None) -> src.models.User: # <--- MUDANÇA AQUI
     """Cria e persiste um usuário comum de teste no banco de dados.
     Requer pelo menos email OU phone_number, e uma senha forte.
     """
@@ -145,7 +145,7 @@ def create_test_user(db: Session, name: str, email: Optional[str] = None, passwo
 
     # Use UserCreate schema para garantir que os dados de entrada são válidos
     user_schema = UserCreate(
-        name=name,
+        nickname=nickname,
         email=email,
         phone_number=phone_number,
         password=password # A senha será hashed dentro do user_cruds.create_user

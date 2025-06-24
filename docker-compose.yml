@@ -24,29 +24,30 @@ services:
       start_period: 30s # Tempo para o serviço iniciar antes de começar a testar
 
   backend:
-    build: ./backend # Constrói a imagem do Dockerfile na pasta ./backend
-    # Comando para iniciar a aplicação FastAPI
-    # --host 0.0.0.0: Ouve em todas as interfaces de rede
-    # --port 8000: Define a porta
-    # --reload: Reinicia o servidor automaticamente em caso de mudanças de código (ótimo para desenvolvimento)
+    build: ./backend
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      # Mapeia toda a pasta 'backend' do host para '/app' dentro do contêiner.
-      # Isso inclui o código Python (src/), arquivos .env, Alembic, etc.
-      # Qualquer alteração nos arquivos locais será refletida instantaneamente no contêiner.
       - ./backend:/app
     ports:
       - "8000:8000" # Mapeia a porta 8000 do contêiner para a porta 8000 na sua máquina
     environment:
-      SECRET_KEY: chave_JWT_segura_e_longa
-      ALGORITHM: HS256
-      # >>> NOVAS VARIÁVEIS DE AMBIENTE <<<
-      ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES: "30" # Note que são strings
-      USER_ACCESS_TOKEN_EXPIRE_MINUTES: "180"
-      # ... o resto das variáveis
-      DEFAULT_ADMIN_USERNAME: "admin"
-      DEFAULT_ADMIN_PASSWORD: "P@ssword123"
-      DATABASE_URL: mysql+mysqlconnector://dev-user:dev123@db:3306/db-cria-site
+      # SECRET_KEY: chave_JWT_segura_e_longa
+      # ALGORITHM: HS256
+      # ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES: "30" # Note que são strings
+      # USER_ACCESS_TOKEN_EXPIRE_MINUTES: "180"
+      # DEFAULT_ADMIN_USERNAME: "admin"
+      # DEFAULT_ADMIN_PASSWORD: "P@ssword123"
+      # DATABASE_URL: mysql+mysqlconnector://dev-user:dev123@db:3306/db-cria-site
+      # FRONTEND_NGROK_URL: "http://localhost:3000" # URL do frontend para comunicação
+
+       - SECRET_KEY=chave_JWT_segura_e_longa
+       - ALGORITHM=HS256
+       - ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES=30 # Note o uso das aspas para valores com espaço ou caracteres especiais
+       - USER_ACCESS_TOKEN_EXPIRE_MINUTES=180
+       - DEFAULT_ADMIN_USERNAME="admin"
+       - DEFAULT_ADMIN_PASSWORD="P@ssword123"
+       - DATABASE_URL=mysql+mysqlconnector://dev-user:dev123@db:3306/db-cria-site
+       - FRONTEND_NGROK_URL_FOR_CORS=${FRONTEND_NGROK_URL}
     depends_on:
       db:
         condition: service_healthy # Garante que o backend só inicie quando o DB estiver "saudável"
@@ -57,20 +58,26 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 30s # Importante: tempo para o serviço iniciar antes de começar a checar
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    # ATENÇÃO: REMOVA OU COMENTE ESTA SEÇÃO DE VOLUMES PARA O FRONTEND
-    # volumes:
-    #   - ./frontend:/app
+    environment: # Adicione esta seção para a comunicação com o backend
+      # VITE_API_BASE_URL: "http://localhost:8000"
+      # FRONTEND_NGROK_URL: "http://localhost:3000" # URL do frontend para comunicação
+       - VITE_API_BASE_URL=${BACKEND_NGROK_URL}
+       - VITE_FRONTEND_NGROK_HOST=${FRONTEND_NGROK_HOST}
+    volumes:
+      - ./frontend:/app
     ports:
       - "3000:3000"
     depends_on:
-      - backend
-    environment: # Adicione esta seção para a comunicação com o backend
-      VITE_API_BASE_URL: http://backend:8000
+      backend:
+        condition: service_healthy
+    networks:
+      - app_network
 
 volumes:
   db_data: # Define um volume nomeado para persistir os dados do MySQL

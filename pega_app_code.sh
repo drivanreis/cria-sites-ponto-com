@@ -1,15 +1,12 @@
-# File: pega_code.sh
+# File: pega_app_code.sh
 
 cd backend
-# cd src
-cd tests
-
+cd src
 
 #!/bin/bash
 
 # Nome do arquivo de saída
-# OUTPUT_FILE="todos_os_codigos_python_do_meu_projeto.txt"
-OUTPUT_FILE="todos_os_codigos_Testes_do_meu_projeto.txt"
+OUTPUT_FILE="todos_os_codigos_python_do_meu_projeto.txt"
 
 # Limpa o arquivo de saída se ele já existir
 > "$OUTPUT_FILE"
