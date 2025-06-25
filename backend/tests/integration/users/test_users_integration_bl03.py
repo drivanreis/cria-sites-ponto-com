@@ -1,4 +1,4 @@
-# File: backend/tests/integration/users/test_users_integration_bl03.py
+# File: backend/tests/integration/users/test_users_integration_bl05.py
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,112 +8,62 @@ from starlette import status
 from src.main import app 
 from src.models.user_models import User
 from src.cruds import user_cruds
-from tests.conftest import db_session_override, client, create_test_user, get_user_token, get_admin_token
-from tests.integration.users.data_users_integration import get_valid_manual_user_data, get_valid_social_user_data
+from tests.conftest import create_test_user
+from tests.integration.users.data_users_integration import get_valid_manual_user_data
 
-# --------- Testes de Criacao Manual -----------
+# (Blocos anteriores já integrados: criação, leitura, atualização e deleção...)
 
-def test_create_manual_user_success(client: TestClient, db_session_override: Session):
-    user_data = get_valid_manual_user_data("success")
-    response = client.post("/users/", json=user_data)
-    
-    assert response.status_code == status.HTTP_201_CREATED
-    data = response.json()
-    assert data["email"] == user_data["email"]
-    assert data["nickname"] == user_data["nickname"]
-    assert data["id"] is not None
+# --------- Testes de Autenticação -----------
 
-    db_user = db_session_override.query(User).filter(User.email == user_data["email"]).first()
-    assert db_user is not None
-    assert user_cruds.verify_user_password(db_session_override, db_user.id, user_data["password"])
+def test_user_login_success(client: TestClient, db_session_override: Session):
+    user_data = get_valid_manual_user_data("login_success")
+    create_test_user(db_session_override, user_data["nickname"], user_data["email"], user_data["password"], phone_number=user_data["phone_number"])
 
-def test_create_manual_user_duplicate_email(client: TestClient, db_session_override: Session):
-    user_data = get_valid_manual_user_data("duplicate_email")
-    client.post("/users/", json=user_data)
-    
-    duplicate_data = get_valid_manual_user_data("other")
-    duplicate_data["email"] = user_data["email"]
-    response = client.post("/users/", json=duplicate_data)
-
-    assert response.status_code == status.HTTP_409_CONFLICT
-    assert "Email" in response.json()["detail"]
-
-def test_create_manual_user_duplicate_phone(client: TestClient, db_session_override: Session):
-    user_data = get_valid_manual_user_data("duplicate_phone")
-    client.post("/users/", json=user_data)
-
-    duplicate_data = get_valid_manual_user_data("other")
-    duplicate_data["phone_number"] = user_data["phone_number"]
-    response = client.post("/users/", json=duplicate_data)
-
-    assert response.status_code == status.HTTP_409_CONFLICT
-    assert "telefone" in response.json()["detail"]
-
-@pytest.mark.parametrize("field", ["nickname", "password"])
-def test_create_manual_user_missing_required_fields(client: TestClient, field):
-    user_data = get_valid_manual_user_data("missing")
-    del user_data[field]
-    response = client.post("/users/", json=user_data)
-    
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-def test_create_manual_user_invalid_email_format(client: TestClient):
-    user_data = get_valid_manual_user_data("invalid_email")
-    user_data["email"] = "invalid-email"
-    response = client.post("/users/", json=user_data)
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-def test_create_manual_user_weak_password(client: TestClient):
-    user_data = get_valid_manual_user_data("weak_pass")
-    user_data["password"] = "short"
-    response = client.post("/users/", json=user_data)
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-# --------- Testes de Criacao via Login Social -----------
-
-def test_create_social_user_google_success(client: TestClient, db_session_override: Session):
-    user_data = get_valid_social_user_data("google_success")
-    response = client.post("/users/", json={
-        "nickname": user_data["nickname"],
-        "google_id": user_data["google_id"]
-    })
-
-    assert response.status_code == status.HTTP_201_CREATED
-    data = response.json()
-    assert data["google_id"] == user_data["google_id"]
-    assert data["nickname"] == user_data["nickname"]
-    
-    db_user = db_session_override.query(User).filter(User.google_id == user_data["google_id"]).first()
-    assert db_user is not None
-
-def test_create_social_user_github_success(client: TestClient, db_session_override: Session):
-    user_data = get_valid_social_user_data("github_success")
-    response = client.post("/users/", json={
-        "nickname": user_data["nickname"],
-        "github_id": user_data["github_id"]
-    })
-
-    assert response.status_code == status.HTTP_201_CREATED
-    data = response.json()
-    assert data["github_id"] == user_data["github_id"]
-    assert data["nickname"] == user_data["nickname"]
-    
-    db_user = db_session_override.query(User).filter(User.github_id == user_data["github_id"]).first()
-    assert db_user is not None
-
-def test_create_social_user_missing_oauth_ids(client: TestClient):
-    user_data = {"nickname": "No Social ID"}
-    response = client.post("/users/", json=user_data)
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-# --------- Testes de Leitura -----------
-
-def test_read_own_user_profile(client: TestClient, db_session_override: Session):
-    user_data = get_valid_manual_user_data("read_self")
-    user = create_test_user(db_session_override, user_data["nickname"], user_data["email"], user_data["password"], phone_number=user_data["phone_number"])
-    token = get_user_token(client, db_session_override, user.email, user_data["password"])
-    
-    response = client.get("/users/me", headers={"Authorization": f"Bearer {token}"})
+    response = client.post("/auth/login", data={"username": user_data["email"], "password": user_data["password"]})
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    assert data["email"] == user.email
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
+
+def test_user_login_invalid_credentials(client: TestClient):
+    response = client.post("/auth/login", data={"username": "nonexistent@example.com", "password": "wrongpass"})
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+def test_user_login_wrong_password(client: TestClient, db_session_override: Session):
+    user_data = get_valid_manual_user_data("wrong_pass")
+    create_test_user(db_session_override, user_data["nickname"], user_data["email"], user_data["password"], phone_number=user_data["phone_number"])
+
+    response = client.post("/auth/login", data={"username": user_data["email"], "password": "Invalid123"})
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+def test_protected_route_no_token(client: TestClient):
+    response = client.get("/users/me")
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+def test_protected_route_invalid_token(client: TestClient):
+    headers = {"Authorization": "Bearer invalidtoken123"}
+    response = client.get("/users/me", headers=headers)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+# --- New Tests for bl03 ---
+
+def test_user_login_with_phone_number_success(client: TestClient, db_session_override: Session):
+    user_data = get_valid_manual_user_data("login_with_phone")
+    create_test_user(db_session_override, user_data["nickname"], user_data["email"], user_data["password"], phone_number=user_data["phone_number"])
+
+    response = client.post("/auth/login", data={"username": user_data["phone_number"], "password": user_data["password"]})
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
+
+def test_user_login_non_existent_email_or_phone(client: TestClient):
+    # Try with an email that doesn't exist
+    response_email = client.post("/auth/login", data={"username": "nonexistent_id@example.com", "password": "anypassword"})
+    assert response_email.status_code == status.HTTP_401_UNAUTHORIZED
+    assert "Incorrect username or password" in response_email.json()["detail"]
+
+    # Try with a phone number that doesn't exist
+    response_phone = client.post("/auth/login", data={"username": "5511900000000", "password": "anypassword"})
+    assert response_phone.status_code == status.HTTP_401_UNAUTHORIZED
+    assert "Incorrect username or password" in response_phone.json()["detail"]

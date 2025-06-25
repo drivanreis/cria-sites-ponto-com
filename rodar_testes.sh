@@ -15,7 +15,7 @@ echo "----------------------------------------------" >> "$LOG_FILE" # Adiciona 
 
 # Testes de integração de usuários (Pate 01)
 # docker compose exec backend pytest tests/integration/users/test_users_integration_bl01.py >> "$LOG_FILE" 2>&1
-# docker compose exec backend pytest tests/integration/users/test_users_integration_bl02.py >> "$LOG_FILE" 2>&1
+ docker compose exec backend pytest tests/integration/users/test_users_integration_bl02.py >> "$LOG_FILE" 2>&1
 # docker compose exec backend pytest tests/integration/users/test_users_integration_bl03.py >> "$LOG_FILE" 2>&1
 # docker compose exec backend pytest tests/integration/users/test_users_integration_bl04.py >> "$LOG_FILE" 2>&1
 # docker compose exec backend pytest tests/integration/users/test_users_integration_bl05.py >> "$LOG_FILE" 2>&1
@@ -23,7 +23,7 @@ echo "----------------------------------------------" >> "$LOG_FILE" # Adiciona 
 
 
 # Testes de integração de administradores
-docker compose exec backend pytest tests/integration/admin_users/test_admin_users_integration_01.py >> "$LOG_FILE" 2>&1
+# docker compose exec backend pytest tests/integration/admin_users/test_admin_users_integration_01.py >> "$LOG_FILE" 2>&1
 # docker compose exec backend pytest tests/integration/admin_users/test_admin_users_integration_02.py >> "$LOG_FILE" 2>&1
 
 # Testes de integração de briefings

@@ -1,6 +1,5 @@
 # File: pega_app_code.sh
 
-cd backend
 cd src
 
 #!/bin/bash

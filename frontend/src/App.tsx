@@ -1,60 +1,62 @@
-import { useState, useEffect } from 'react';
-import './App.css'; // Mantenha ou ajuste se tiver seu próprio CSS
+// src/App.tsx
+
+import { Routes, Route } from 'react-router-dom';
+// Importe seus componentes de página
+import HomePage from './pages/common/HomePage.tsx';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage.tsx'; // << NOVO
+import DashboardPage from './pages/user/DashboardPage.tsx';
+import ProfilePage from './pages/user/ProfilePage.tsx';
+import BriefingsListPage from './pages/user/BriefingsListPage.tsx';
+import BriefingDetailPage from './pages/user/BriefingDetailPage.tsx';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage.tsx';
+import AdminUsersPage from './pages/admin/AdminUsersPage.tsx';
+import AdminEmployeesPage from './pages/admin/AdminEmployeesPage.tsx';
+import TestConnectionsPage from './pages/admin/TestConnectionsPage.tsx';
+import AboutPage from './pages/common/AboutPage.tsx';
+
+import Header from './components/layout/Header.tsx'; // << NOVO
+import Footer from './components/layout/Footer.tsx'; // << NOVO
+
+import { AuthProvider } from './contexts/AuthProvider.tsx';
+import ProtectedRoute from './components/common/ProtectedRoute.tsx';
+
+import './App.css'; // Certifique-se de que este CSS existe e contém os estilos básicos
 
 function App() {
-  const [backendMessage, setBackendMessage] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL // Equivalente 'http://localhost:8000';
-
-  useEffect(() => {
-    const fetchBackendMessage = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/`, {
-          // *** AQUI É ONDE ADICIONAMOS O CABEÇALHO ***
-          headers: {
-            'ngrok-skip-browser-warning': 'true', // Este cabeçalho diz ao ngrok para pular a página de aviso
-            'Content-Type': 'application/json' // Geralmente é bom incluir para APIs JSON
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
-        }
-        const data = await response.json();
-        setBackendMessage(data.message);
-      } catch (err) {
-        console.error("Erro ao buscar mensagem do backend:", err);
-        if (err instanceof Error) {
-          setError(`Falha ao conectar com o backend: ${err.message}. Verifique se o backend está rodando em API_BASE_URL: ${API_BASE_URL}`);
-        } else {
-          setError("Falha ao conectar com o backend: Erro desconhecido.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBackendMessage();
-  }, [API_BASE_URL]);
-
-  if (loading) {
-    return <div className="App">Carregando mensagem do backend...</div>;
-  }
-
-  if (error) {
-    return <div className="App" style={{ color: 'red' }}>Erro: {error}</div>;
-  }
-
   return (
-    <div className="App">
-      <h1>Bem-vindo!</h1>
-      <h2> ao Cria Sites Ponto Com!</h2>
-      <p>Se você vê a mensagem abaixo, a integração frontend-backend está funcionando!</p>
-      <p>{backendMessage}</p>
-      <p>Pelo endereço: {API_BASE_URL}</p>
-      <p>Agora você pode começar a construir sua interface de usuário aqui.</p>
-    </div>
+    <AuthProvider>
+      <div className="App">
+        <Header /> {/* Incluir o Header aqui */}
+
+        <main className="app-content"> {/* Um elemento main para o conteúdo principal */}
+          <Routes>
+            {/* Rotas Públicas */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/cadastro" element={<RegisterPage />} /> {/* << ROTA PARA REGISTRO */}
+            <Route path="/sobre" element={<AboutPage />} />
+
+            {/* Rotas de Usuário Protegidas */}
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/briefings" element={<ProtectedRoute><BriefingsListPage /></ProtectedRoute>} />
+            <Route path="/briefings/:id" element={<ProtectedRoute><BriefingDetailPage /></ProtectedRoute>} />
+
+            {/* Rotas de Administrador Protegidas (exige login e permissão de admin) */}
+            <Route path="/admin/dashboard" element={<ProtectedRoute adminOnly><AdminDashboardPage /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminUsersPage /></ProtectedRoute>} />
+            <Route path="/admin/employees" element={<ProtectedRoute adminOnly><AdminEmployeesPage /></ProtectedRoute>} />
+            <Route path="/admin/test-connections" element={<ProtectedRoute adminOnly><TestConnectionsPage /></ProtectedRoute>} />
+
+            {/* Rota para 404 - Not Found */}
+            <Route path="*" element={<div>404 - Página Não Encontrada</div>} />
+          </Routes>
+        </main>
+
+        <Footer /> {/* Incluir o Footer aqui */}
+      </div>
+    </AuthProvider>
   );
 }
 
