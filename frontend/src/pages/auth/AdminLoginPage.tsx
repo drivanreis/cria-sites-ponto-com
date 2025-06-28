@@ -1,41 +1,42 @@
-
-// src/pages/auth/LoginPage.tsx
+// src/pages/auth/AdminLoginPage.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthProvider.tsx';
-import '../../App.css'; // Usando o CSS global por enquanto
+import { useAdminAuth } from '../../hooks/useAdminAuth';
+import { loginAdmin } from '../../api/auth';
+import '../../App.css';
 
-const LoginPage: React.FC = () => {
+const AdminLoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { login, isAuthenticated, userRole } = useAuth();
+  const { login, isAuthenticated, userRole } = useAdminAuth();
   const navigate = useNavigate();
 
-  // Redireciona se já estiver logado
-  if (isAuthenticated) {
-    if (userRole === 'admin') {
-      navigate('/admin/dashboard', { replace: true });
-    } else {
-      navigate('/dashboard', { replace: true });
-    }
+  if (isAuthenticated && userRole === 'admin') {
+    navigate('/admin/dashboard', { replace: true });
   }
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setError(null); // Limpa erros anteriores
+    setError(null);
+
     try {
-      await login(username, password);
-      // O redirecionamento acontece automaticamente pelo `if (isAuthenticated)` acima,
-      // pois o estado de autenticação será atualizado pelo AuthContext.
-    } catch (err: any) {
-      setError(err.message || "Erro desconhecido ao tentar fazer login.");
+      const response = await loginAdmin(username, password);
+
+      login(response.access_token);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Erro desconhecido ao tentar fazer login.");
+      } else {
+        setError("Erro desconhecido.");
+      }
     }
   };
 
   return (
-    <div className="App"> {/* Usando a classe App para centralizar */}
-      <h1>Login</h1>
+    <div className="App">
+      <h1>Login Administrativo</h1>
+
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '300px', margin: '20px auto' }}>
         <div>
           <label htmlFor="username">Usuário:</label>
@@ -47,6 +48,7 @@ const LoginPage: React.FC = () => {
             required
           />
         </div>
+
         <div>
           <label htmlFor="password">Senha:</label>
           <input
@@ -57,17 +59,17 @@ const LoginPage: React.FC = () => {
             required
           />
         </div>
+
         {error && <p style={{ color: 'red' }}>{error}</p>}
+
         <button type="submit">Entrar</button>
       </form>
-      <p>
-        Não tem uma conta? <a href="/cadastro">Cadastre-se aqui</a>
-      </p>
-      <p>
-        Para testar como Admin: use qualquer usuário/senha que inclua "admin" no nome de usuário (ex: admin@example.com / password).
+
+      <p style={{ textAlign: 'center', marginTop: '20px' }}>
+        <a href="/">Voltar para o site público</a>
       </p>
     </div>
   );
 };
 
-export default LoginPage;
+export default AdminLoginPage;

@@ -14,6 +14,8 @@ export interface AuthContextType {
   accessToken: string | null;
   login: (token: string) => void;
   logout: () => void;
+  isAuthenticated: boolean;
+  userRole: 'admin' | 'user' | null;
 }
 
 // 👇 Agora sim estamos exportando tudo corretamente

@@ -1,7 +1,11 @@
-// src/pages/user/BriefingsListPage.tsx
+// frontend/src/pages/user/BriefingsListPage.tsx
 
 import React, { useEffect, useState } from 'react';
-import { getBriefings, createBriefing, deleteBriefing } from '../../api/briefings';
+import {
+  getBriefings,
+  createBriefing,
+  deleteBriefing,
+} from '../../api/briefings';
 import type { Briefing } from '../../api/briefings';
 
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +16,6 @@ const BriefingsListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newBriefingTitle, setNewBriefingTitle] = useState('');
-  const [newBriefingDescription, setNewBriefingDescription] = useState('');
   const navigate = useNavigate();
 
   const fetchBriefings = async () => {
@@ -24,7 +27,7 @@ const BriefingsListPage: React.FC = () => {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Erro ao carregar briefings');
+        setError('Erro ao carregar briefings.');
       }
     } finally {
       setLoading(false);
@@ -40,55 +43,52 @@ const BriefingsListPage: React.FC = () => {
       alert('Título é obrigatório');
       return;
     }
-try {
-  const newBriefing = await createBriefing({
-    title: newBriefingTitle,
-    description: newBriefingDescription,
-  });
-  setBriefings((prev) => [...prev, newBriefing]);
-  setNewBriefingTitle('');
-  setNewBriefingDescription('');
-} catch (err: unknown) {
-  if (err instanceof Error) {
-    alert(err.message);
-  } else {
-    alert('Erro ao criar briefing');
-  }
-}
+
+    try {
+      const newBriefing = await createBriefing({
+        title: newBriefingTitle,
+      });
+      setBriefings((prev) => [...prev, newBriefing]);
+      setNewBriefingTitle('');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert('Erro ao criar briefing.');
+      }
+    }
   };
 
-const handleDeleteBriefing = async (id: string) => {
-  if (!window.confirm(`Tem certeza que deseja excluir o briefing ${id}?`)) return;
-  try {
-    await deleteBriefing(id);
-    setBriefings((prev) => prev.filter((b) => b.id !== id));
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      alert(err.message);
-    } else {
-      alert('Erro ao excluir briefing');
+  const handleDeleteBriefing = async (id: string) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o briefing ${id}?`)) return;
+
+    try {
+      await deleteBriefing(id);
+      setBriefings((prev) => prev.filter((b) => b.id !== id));
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert('Erro ao excluir briefing.');
+      }
     }
-  }
-};
+  };
+
+  const handleViewBriefing = (id: string) => {
+    navigate(`/briefings/${id}`);
+  };
 
   return (
     <div className="App">
       <h1>Meus Briefings</h1>
 
       <div style={{ marginBottom: '20px' }}>
-        <h2>Novo Briefing</h2>
+        <h2>Criar Novo Briefing</h2>
         <input
           type="text"
-          placeholder="Título"
+          placeholder="Título do Briefing"
           value={newBriefingTitle}
           onChange={(e) => setNewBriefingTitle(e.target.value)}
-          style={{ marginRight: '10px', padding: '5px' }}
-        />
-        <input
-          type="text"
-          placeholder="Descrição"
-          value={newBriefingDescription}
-          onChange={(e) => setNewBriefingDescription(e.target.value)}
           style={{ marginRight: '10px', padding: '5px' }}
         />
         <button onClick={handleCreateBriefing}>Criar</button>
@@ -99,36 +99,25 @@ const handleDeleteBriefing = async (id: string) => {
       ) : error ? (
         <p style={{ color: 'red' }}>{error}</p>
       ) : briefings.length === 0 ? (
-        <p>Nenhum briefing encontrado.</p>
+        <p>Nenhum briefing criado ainda.</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ borderBottom: '1px solid #ccc' }}>ID</th>
-              <th style={{ borderBottom: '1px solid #ccc' }}>Título</th>
-              <th style={{ borderBottom: '1px solid #ccc' }}>Descrição</th>
-              <th style={{ borderBottom: '1px solid #ccc' }}>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {briefings.map((briefing) => (
-              <tr key={briefing.id}>
-                <td>{briefing.id}</td>
-                <td>{briefing.title}</td>
-                <td>{briefing.description}</td>
-                <td>
-                  <button onClick={() => navigate(`/briefings/${briefing.id}`)}>Ver</button>
-                  <button
-                    onClick={() => handleDeleteBriefing(briefing.id)}
-                    style={{ marginLeft: '10px', backgroundColor: 'red', color: 'white' }}
-                  >
-                    Excluir
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {briefings.map((briefing) => (
+            <li key={briefing.id} style={{ marginBottom: '15px' }}>
+              <strong>{briefing.title}</strong> — <em>{briefing.status}</em>
+              <br />
+              <button
+                style={{ marginRight: '10px' }}
+                onClick={() => handleViewBriefing(briefing.id)}
+              >
+                Ver Detalhes
+              </button>
+              <button onClick={() => handleDeleteBriefing(briefing.id)}>
+                Excluir
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

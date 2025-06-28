@@ -1,6 +1,10 @@
-// src/pages/user/ProfilePage.tsx
+// frontend/src/pages/user/ProfilePage.tsx
+
 import React, { useEffect, useState } from 'react';
-import { getUserProfile, updateUserProfile } from '../../api/users';
+import {
+  getUserProfile,
+  updateUserProfile,
+} from '../../api/users';
 import type { User } from '../../api/users';
 
 import '../../App.css';
@@ -17,8 +21,9 @@ const ProfilePage: React.FC = () => {
       const profile = await getUserProfile();
       setUser(profile);
       setFormData({
-        username: profile.username,
+        nickname: profile.nickname,
         email: profile.email,
+        phone_number: profile.phone_number,
       });
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -64,11 +69,11 @@ const ProfilePage: React.FC = () => {
 
       <form onSubmit={handleSubmit} style={{ maxWidth: '400px', margin: 'auto' }}>
         <div>
-          <label>Usuário:</label>
+          <label>Apelido (nickname):</label>
           <input
             type="text"
-            name="username"
-            value={formData.username || ''}
+            name="nickname"
+            value={formData.nickname || ''}
             onChange={handleChange}
             required
           />
@@ -81,7 +86,16 @@ const ProfilePage: React.FC = () => {
             name="email"
             value={formData.email || ''}
             onChange={handleChange}
-            required
+          />
+        </div>
+
+        <div>
+          <label>Telefone:</label>
+          <input
+            type="text"
+            name="phone_number"
+            value={formData.phone_number || ''}
+            onChange={handleChange}
           />
         </div>
 
@@ -91,6 +105,15 @@ const ProfilePage: React.FC = () => {
       </form>
 
       {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
+
+      <hr />
+
+      <h3>Informações do Sistema</h3>
+      <p><strong>Status:</strong> {user.status}</p>
+      <p><strong>Email Verificado:</strong> {user.email_verified ? 'Sim' : 'Não'}</p>
+      <p><strong>2FA Ativado:</strong> {user.is_two_factor_enabled ? 'Sim' : 'Não'}</p>
+      <p><strong>Criado em:</strong> {user.creation_date}</p>
+      {user.last_login && <p><strong>Último Login:</strong> {user.last_login}</p>}
     </div>
   );
 };

@@ -4,13 +4,19 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Interface para um usuário (completa, incluindo campos que podem vir da API)
 export interface User {
-  id: string; // Ou number, dependendo da sua API
-  username: string;
+  id: string;
+  nickname: string;
   email: string;
+  phone_number?: string;
+  email_verified: boolean;
   is_active: boolean;
-  is_admin: boolean; // Supondo que a API retorne isso para diferenciar
-  // Adicione outros campos conforme a estrutura do seu User e AdminUser na API
+  is_admin: boolean;
+  is_two_factor_enabled: boolean;
+  creation_date: string;
+  last_login?: string;
+  status: string;
 }
+
 
 // Helper para lidar com a autenticação (token)
 const getAuthHeaders = () => {

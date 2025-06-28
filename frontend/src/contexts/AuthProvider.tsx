@@ -1,7 +1,8 @@
 // frontend/src/contexts/AuthProvider.tsx
 
 import React, { useEffect, useState } from 'react';
-import { AuthContext, AuthContextType, AuthUser } from './AuthContext';
+import { AuthContext } from './AuthContext';
+import type { AuthContextType, AuthUser } from './AuthContext';
 import type { ReactNode } from 'react';
 
 interface Props {
@@ -51,6 +52,8 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
     accessToken,
     login,
     logout,
+    isAuthenticated: !!user,
+    userRole: user?.is_admin ? 'admin' : 'user',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,25 +1,28 @@
-// src/api/briefings.ts
+// frontend/src/api/briefings.ts
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+type BriefingContentValue = string | number | boolean | null | BriefingContentValue[] | { [key: string]: BriefingContentValue };
 
 export interface Briefing {
   id: string;
   title: string;
-  description: string;
-  created_at?: string;
-  updated_at?: string;
-  user_id?: string;
-  // Adicione campos conforme sua API retornar
+  status: string;
+  content?: Record<string, BriefingContentValue>;
+  development_roteiro?: Record<string, BriefingContentValue>;
+  creation_date?: string;
+  update_date?: string;
+  last_edited_by?: string;
 }
 
 export interface BriefingChatMessage {
-  sender: string;
-  message: string;
+  sender_type: string;
+  message_content: string;
   timestamp: string;
 }
 
 export interface BriefingWithHistory extends Briefing {
-  history: BriefingChatMessage[];
+  conversation_history: BriefingChatMessage[];
 }
 
 const getAuthHeaders = () => {
@@ -117,7 +120,7 @@ export const chatWithEmployee = async (
   const response = await fetch(`${API_BASE_URL}/briefings/${briefingId}/chat/${employeeName}`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ user_message: message, employee_name: employeeName }),
   });
 
   if (!response.ok) {
@@ -129,7 +132,7 @@ export const chatWithEmployee = async (
 };
 
 // Compilar briefing (POST /briefings/{id}/compile)
-export const compileBriefing = async (briefingId: string): Promise<Record<string, unknown>> => {
+export const compileBriefing = async (briefingId: string): Promise<Record<string, BriefingContentValue>> => {
   const response = await fetch(`${API_BASE_URL}/briefings/${briefingId}/compile`, {
     method: 'POST',
     headers: getAuthHeaders(),

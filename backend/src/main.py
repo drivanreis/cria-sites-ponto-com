@@ -11,8 +11,9 @@ from src.utils.datetime_utils import get_current_datetime_str
 from src.middlewares.cors import CORS_MIDDLEWARE_SETTINGS
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.routers import admin_user_routers, auth_routers, briefing_routers, \
-                            employee_routers, user_routers
+from src.routers import admin_user_routers, briefing_routers, \
+                            employee_routers, user_routers, \
+                            auth_admin_routers, auth_user_routers, auth_social_routers
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 backend_root = os.path.abspath(os.path.join(current_dir, "../"))
@@ -65,7 +66,9 @@ app.include_router(user_routers.router)
 app.include_router(admin_user_routers.router)
 app.include_router(employee_routers.router)
 app.include_router(briefing_routers.router)
-app.include_router(auth_routers.router)
+app.include_router(auth_admin_routers.router)
+app.include_router(auth_user_routers.router)
+app.include_router(auth_social_routers.router)
 
 @app.get("/")
 def read_root():

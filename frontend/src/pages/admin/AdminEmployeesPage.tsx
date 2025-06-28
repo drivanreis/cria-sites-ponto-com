@@ -1,7 +1,7 @@
-// src/pages/admin/AdminEmployeesPage.tsx
 import React, { useEffect, useState } from 'react';
-import { getAllEmployees, Employee, updateEmployee } from '../../api/employees'; // Importa funções da API
-import '../../App.css'; // Usando o CSS global por enquanto
+import { getAllEmployees, updateEmployee } from '../../api/employees';
+import type { Employee } from '../../api/employees';
+import '../../App.css';
 
 const AdminEmployeesPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -18,25 +18,38 @@ const AdminEmployeesPage: React.FC = () => {
     try {
       const fetchedEmployees = await getAllEmployees();
       setEmployees(fetchedEmployees);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao carregar funcionários.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Erro desconhecido.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Exemplo de como você poderia implementar a edição inline (simplificado)
   const handleToggleActive = async (employee: Employee) => {
     try {
-      // Cria um objeto com os dados a serem atualizados (apenas o is_active)
-      const updatedEmployee = await updateEmployee(employee.id, { is_active: !employee.is_active });
-      // Atualiza o estado local para refletir a mudança
-      setEmployees(prevEmployees => 
-        prevEmployees.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp)
+      const updatedEmployee = await updateEmployee(employee.id, {
+        is_active: !employee.is_active,
+      });
+      setEmployees((prevEmployees) =>
+        prevEmployees.map((emp) =>
+          emp.id === updatedEmployee.id ? updatedEmployee : emp
+        )
       );
-      alert(`Status de ${updatedEmployee.name} atualizado para ${updatedEmployee.is_active ? 'Ativo' : 'Inativo'}!`);
-    } catch (err: any) {
-      setError(err.message || `Erro ao atualizar funcionário ${employee.name}.`);
+      alert(
+        `Status de ${updatedEmployee.name} atualizado para ${
+          updatedEmployee.is_active ? 'Ativo' : 'Inativo'
+        }!`
+      );
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(`Erro desconhecido ao atualizar ${employee.name}.`);
+      }
     }
   };
 
@@ -52,7 +65,7 @@ const AdminEmployeesPage: React.FC = () => {
     <div className="App">
       <h1>Gerenciamento de Funcionários</h1>
       <p>Aqui você pode visualizar e gerenciar os funcionários.</p>
-      
+
       {employees.length === 0 ? (
         <p>Nenhum funcionário encontrado.</p>
       ) : (
@@ -77,19 +90,18 @@ const AdminEmployeesPage: React.FC = () => {
                   <button onClick={() => handleToggleActive(employee)}>
                     {employee.is_active ? 'Desativar' : 'Ativar'}
                   </button>
-                  {/*
-                  <button style={{ marginLeft: '5px' }} onClick={() => alert(`Editar ${employee.name}`)}>Editar</button>
-                  <button style={{ marginLeft: '5px', backgroundColor: 'red', color: 'white' }} onClick={() => alert(`Deletar ${employee.name}`)}>Deletar</button>
-                  */}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+
       <div style={{ marginTop: '20px' }}>
         <button onClick={fetchEmployees}>Atualizar Lista</button>
-        <a href="/admin/dashboard" style={{ marginLeft: '10px' }}>Voltar ao Painel Admin</a>
+        <a href="/admin/dashboard" style={{ marginLeft: '10px' }}>
+          Voltar ao Painel Admin
+        </a>
       </div>
     </div>
   );

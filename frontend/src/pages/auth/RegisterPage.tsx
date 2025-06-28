@@ -1,14 +1,11 @@
-
 // src/pages/auth/RegisterPage.tsx
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginUser as apiLoginUser } from '../../api/auth'; // Reuso do loginUser para exemplo pós-registro
-// IMPORTANTE: Sua API Swagger mostra uma rota POST /users/ para criar NOVO USUÁRIO.
-// Você precisará de uma função correspondente em src/api/users.ts para `createUser`.
 import '../../App.css';
 
 const RegisterPage: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,23 +23,35 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    // AQUI VOCÊ CHAMARIA A FUNÇÃO DA API PARA CRIAR O USUÁRIO
-    // Exemplo HIPOTÉTICO, você precisaria implementar `createUser` em `src/api/users.ts`
-    /*
-    import { createUser } from '../../api/users';
     try {
-      await createUser({ username, email, password });
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({
+          nickname,
+          email,
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Erro ao tentar registrar.");
+      }
+
       setSuccessMessage('Cadastro realizado com sucesso! Redirecionando para o login...');
       setTimeout(() => navigate('/login'), 2000);
-    } catch (err: any) {
-      setError(err.message || "Erro ao tentar registrar.");
-    }
-    */
-    
-    // POR ENQUANTO, como não temos o `createUser` aqui, vamos simular:
-    console.log("Tentando registrar:", { username, email, password });
-    setSuccessMessage('Cadastro simulado com sucesso! Redirecionando para o login...');
-    setTimeout(() => navigate('/login'), 2000);
+    } catch (err: unknown) {
+  if (err instanceof Error) {
+    setError(err.message || "Erro desconhecido.");
+  } else {
+    setError("Erro desconhecido.");
+  }
+}
+
   };
 
   return (
@@ -50,13 +59,14 @@ const RegisterPage: React.FC = () => {
       <h1>Cadastre-se</h1>
       <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '300px', margin: '20px auto' }}>
         <div>
-          <label htmlFor="regUsername">Usuário:</label>
+          <label htmlFor="nickname">Apelido:</label>
           <input
             type="text"
-            id="regUsername"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            id="nickname"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
             required
+            placeholder="Ex: João Silva"
           />
         </div>
         <div>
@@ -67,6 +77,7 @@ const RegisterPage: React.FC = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            placeholder="seu@email.com"
           />
         </div>
         <div>

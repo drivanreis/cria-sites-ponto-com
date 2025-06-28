@@ -31,21 +31,12 @@ services:
     ports:
       - "8000:8000" # Mapeia a porta 8000 do contêiner para a porta 8000 na sua máquina
     environment:
-      # SECRET_KEY: chave_JWT_segura_e_longa
-      # ALGORITHM: HS256
-      # ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES: "30" # Note que são strings
-      # USER_ACCESS_TOKEN_EXPIRE_MINUTES: "180"
-      # DEFAULT_ADMIN_USERNAME: "admin"
-      # DEFAULT_ADMIN_PASSWORD: "P@ssword123"
-      # DATABASE_URL: mysql+mysqlconnector://dev-user:dev123@db:3306/db-cria-site
-      # FRONTEND_NGROK_URL: "http://localhost:3000" # URL do frontend para comunicação
-
        - SECRET_KEY=chave_JWT_segura_e_longa
        - ALGORITHM=HS256
        - ADMIN_ACCESS_TOKEN_EXPIRE_MINUTES=30 # Note o uso das aspas para valores com espaço ou caracteres especiais
        - USER_ACCESS_TOKEN_EXPIRE_MINUTES=180
-       - DEFAULT_ADMIN_USERNAME="admin"
-       - DEFAULT_ADMIN_PASSWORD="P@ssword123"
+       - DEFAULT_ADMIN_USERNAME=admin
+       - DEFAULT_ADMIN_PASSWORD=P@ssword123
        - DATABASE_URL=mysql+mysqlconnector://dev-user:dev123@db:3306/db-cria-site
        - FRONTEND_NGROK_URL_FOR_CORS=${FRONTEND_NGROK_URL}
     depends_on:
