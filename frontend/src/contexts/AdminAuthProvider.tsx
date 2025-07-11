@@ -1,5 +1,11 @@
-// frontend/src/contexts/AdminAuthProvider.tsx
-import React, { useState, useEffect } from 'react';
+// File: frontend/src/contexts/AdminAuthProvider.tsx
+
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+} from 'react';
 import type { ReactNode } from 'react';
 import { AdminAuthContext } from './AdminAuthContext';
 
@@ -8,31 +14,47 @@ interface AdminAuthProviderProps {
 }
 
 export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState<'admin' | null>(null);
+  const [adminAccessToken, setAdminAccessToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('admin_token');
+    const token = sessionStorage.getItem('adminAccessToken');
     if (token) {
-      setIsAuthenticated(true);
-      setUserRole('admin');
+      setAdminAccessToken(token);
     }
+    setIsLoading(false);
   }, []);
 
-  const login = (token: string) => {
-    localStorage.setItem('admin_token', token);
-    setIsAuthenticated(true);
-    setUserRole('admin');
-  };
+  const isAuthenticated = useMemo(() => !!adminAccessToken, [adminAccessToken]);
 
-  const logout = () => {
-    localStorage.removeItem('admin_token');
-    setIsAuthenticated(false);
-    setUserRole(null);
-  };
+  const userRole = useMemo<'admin' | null>(
+    () => (adminAccessToken ? 'admin' : null),
+    [adminAccessToken]
+  );
+
+  const login = useCallback((token: string) => {
+    sessionStorage.setItem('adminAccessToken', token);
+    setAdminAccessToken(token);
+  }, []);
+
+  const logout = useCallback(() => {
+    sessionStorage.removeItem('adminAccessToken');
+    setAdminAccessToken(null);
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      isAuthenticated,
+      isLoading,
+      userRole,
+      login,
+      logout,
+    }),
+    [isAuthenticated, isLoading, userRole, login, logout]
+  );
 
   return (
-    <AdminAuthContext.Provider value={{ isAuthenticated, userRole, login, logout }}>
+    <AdminAuthContext.Provider value={value}>
       {children}
     </AdminAuthContext.Provider>
   );

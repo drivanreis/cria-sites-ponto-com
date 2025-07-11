@@ -1,4 +1,4 @@
-// src/api/employees.ts
+// frontend/src/api/employees.ts
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -11,15 +11,8 @@ export interface Employee {
   // Adicione outros campos conforme a estrutura do seu Employee na API
 }
 
-// Helper para obter os headers de autenticação
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('accessToken');
-  return {
-    'ngrok-skip-browser-warning': 'true',
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
-  };
-};
+// ✅ IMPORTE A FUNÇÃO getAuthHeaders DO MÓDULO DE UTILITÁRIOS:
+import { getAuthHeaders } from '../utils/getAuthHeaders';
 
 // Funções para gerenciamento de Employees
 // ------------------------------------------
@@ -29,7 +22,8 @@ export const getAllEmployees = async (): Promise<Employee[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/employees/`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      // ✅ CORREÇÃO AQUI: Use o getAuthHeaders global com o papel 'admin'
+      headers: getAuthHeaders('admin'),
     });
 
     if (!response.ok) {
@@ -48,7 +42,8 @@ export const getEmployeeById = async (employeeId: string): Promise<Employee> => 
   try {
     const response = await fetch(`${API_BASE_URL}/employees/${employeeId}`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      // ✅ CORREÇÃO AQUI: Use o getAuthHeaders global com o papel 'admin'
+      headers: getAuthHeaders('admin'),
     });
 
     if (!response.ok) {
@@ -67,7 +62,8 @@ export const updateEmployee = async (employeeId: string, employeeData: Partial<E
   try {
     const response = await fetch(`${API_BASE_URL}/employees/${employeeId}`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
+      // ✅ CORREÇÃO AQUI: Use o getAuthHeaders global com o papel 'admin'
+      headers: getAuthHeaders('admin'),
       body: JSON.stringify(employeeData),
     });
 
@@ -87,7 +83,8 @@ export const testAllAiConnections = async (): Promise<unknown> => { // O tipo de
   try {
     const response = await fetch(`${API_BASE_URL}/employees/test_ai_connections`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      // ✅ CORREÇÃO AQUI: Use o getAuthHeaders global com o papel 'admin'
+      headers: getAuthHeaders('admin'),
     });
 
     if (!response.ok) {
@@ -102,9 +99,7 @@ export const testAllAiConnections = async (): Promise<unknown> => { // O tipo de
 };
 
 // Observação: As rotas para POST (criar) e DELETE (deletar) funcionários
-// não foram explicitamente mostradas na sua Swagger UI para `Employees`.
-// Se elas existirem, você adicionaria funções aqui:
-/*
-export const createEmployee = async (employeeData: Omit<Employee, 'id'>): Promise<Employee> => { ... };
-export const deleteEmployee = async (employeeId: string): Promise<unknown> => { ... };
-*/
+// não existem!
+// A aplicação não funciona com mais ou menos funcionários,
+// apenas com os que já estão cadastrados no banco de dados.
+// Portanto, não implementamos essas funções.

@@ -1,90 +1,163 @@
-// src/pages/admin/AdminUsersPage.tsx
+// File: frontend/src/pages/admin/AdminUsersPage.tsx
+
 import React, { useEffect, useState } from 'react';
-import { getAllUsers, User, deleteUser } from '../../api/users'; // Importa funções da API de usuários
-import '../../App.css'; // Usando o CSS global por enquanto
+import {
+  getAllUsers,
+  updateUser,
+  deleteUser,
+} from '../../api/users';
+import type { User } from '../../api/users';
+
+import '../../App.css';
 
 const AdminUsersPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const [formData, setFormData] = useState<Partial<User>>({});
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const fetchUsers = async () => {
-    setLoading(true);
-    setError(null);
     try {
-      const fetchedUsers = await getAllUsers();
-      setUsers(fetchedUsers);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao carregar usuários.');
+      const usersData = await getAllUsers();
+      setUsers(usersData);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Erro ao carregar usuários.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (window.confirm(`Tem certeza que deseja deletar o usuário com ID ${userId}?`)) {
-      try {
-        await deleteUser(userId);
-        alert(`Usuário ${userId} deletado com sucesso!`);
-        fetchUsers(); // Recarrega a lista de usuários após a exclusão
-      } catch (err: any) {
-        setError(err.message || `Erro ao deletar usuário ${userId}.`);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingUserId) {
+        await updateUser(editingUserId, formData);
+        setSuccessMessage('Usuário atualizado com sucesso!');
+      }
+      setFormData({});
+      setEditingUserId(null);
+      fetchUsers();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Erro ao salvar alterações.');
       }
     }
   };
 
-  if (loading) {
-    return <div className="App">Carregando usuários...</div>;
-  }
+  const handleEdit = (user: User) => {
+    setEditingUserId(user.id);
+    setFormData({
+      nickname: user.nickname,
+      email: user.email,
+      phone_number: user.phone_number,
+    });
+    setSuccessMessage(null);
+    setError(null);
+  };
 
-  if (error) {
-    return <div className="App" style={{ color: 'red' }}>Erro: {error}</div>;
-  }
+  const handleDelete = async (userId: string) => {
+    const confirmDelete = confirm('Tem certeza que deseja excluir este usuário?');
+    if (!confirmDelete) return;
+
+    try {
+      await deleteUser(userId);
+      setSuccessMessage('Usuário excluído com sucesso.');
+      fetchUsers();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Erro ao excluir usuário.');
+      }
+    }
+  };
+
+  if (loading) return <div className="App">Carregando usuários...</div>;
+  if (error) return <div className="App" style={{ color: 'red' }}>{error}</div>;
 
   return (
     <div className="App">
-      <h1>Gerenciamento de Usuários</h1>
-      <p>Aqui você pode visualizar e gerenciar todos os usuários do sistema.</p>
-      
-      {users.length === 0 ? (
-        <p>Nenhum usuário encontrado.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Username</th>
-              <th>Email</th>
-              <th>Ativo</th>
-              <th>Admin</th>
-              <th>Ações</th>
+      <h1>Gerenciar Usuários Comuns</h1>
+
+      {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
+
+      <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
+        <h3>{editingUserId ? 'Editar Usuário' : 'Selecione um usuário para editar'}</h3>
+
+        <input
+          type="text"
+          name="nickname"
+          placeholder="Nickname"
+          value={formData.nickname || ''}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email || ''}
+          onChange={handleChange}
+        />
+        <input
+          type="text"
+          name="phone_number"
+          placeholder="Telefone"
+          value={formData.phone_number || ''}
+          onChange={handleChange}
+        />
+
+        <button type="submit">Salvar Alterações</button>
+      </form>
+
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nickname</th>
+            <th>Email</th>
+            <th>Telefone</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user: User) => (
+            <tr key={user.id}>
+              <td>{user.id}</td>
+              <td>{user.nickname}</td>
+              <td>{user.email}</td>
+              <td>{user.phone_number}</td>
+              <td>{user.status}</td>
+              <td>
+                <button onClick={() => handleEdit(user)}>Editar</button>
+                <button onClick={() => handleDelete(user.id)} style={{ color: 'red' }}>
+                  Excluir
+                </button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>{user.username}</td>
-                <td>{user.email}</td>
-                <td>{user.is_active ? 'Sim' : 'Não'}</td>
-                <td>{user.is_admin ? 'Sim' : 'Não'}</td>
-                <td>
-                  <button onClick={() => alert(`Funcionalidade de editar para o usuário ${user.id} (ainda não implementado)`)}>Editar</button>
-                  <button onClick={() => handleDeleteUser(user.id)} style={{ marginLeft: '5px', backgroundColor: 'red', color: 'white' }}>Deletar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      <div style={{ marginTop: '20px' }}>
-        <button onClick={fetchUsers}>Atualizar Lista</button>
-        <a href="/admin/dashboard" style={{ marginLeft: '10px' }}>Voltar ao Painel Admin</a>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

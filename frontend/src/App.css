@@ -1,150 +1,217 @@
-/* src/App.css */
-/* Estilos globais para o layout */
-#root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh; /* Faz com que a raiz ocupe a altura total da viewport */
-}
+/* frontend/src/App.css */
 
+/* Contêiner principal da aplicação */
 .App {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* Garante que o App ocupe a altura total */
-  text-align: center;
-  /* background-color: #f0f2f5; Remova ou ajuste conforme seu gosto */
+  min-height: 100vh;
+  /* As cores de fundo e texto são herdadas do 'body' via 'index.css' */
 }
 
-.app-content {
-  flex-grow: 1; /* Faz o conteúdo principal preencher o espaço restante */
-  padding: 20px;
-  /* max-width: 1200px;
-  margin: 0 auto; */ /* Para centralizar o conteúdo, se quiser */
+/* Estilo para o contêiner de conteúdo principal */
+.main-content {
+  flex-grow: 1; /* Permite que o conteúdo ocupe o espaço restante */
+  padding: var(--spacing-l); /* Espaçamento global para o conteúdo */
+  max-width: 1200px; /* Limite a largura para melhor legibilidade */
+  margin: 0 auto;   /* Centraliza o conteúdo */
 }
 
-/* Estilos para o Header (Copie da seção do Header.tsx) */
-.app-header {
-  background-color: #282c34;
-  padding: 15px 20px;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.header-content {
-  width: 100%;
-  max-width: 1200px;
+/* Estilos de layout para o cabeçalho administrativo */
+.header-admin {
+  background-color: var(--color-background-light);
+  padding: var(--spacing-s) var(--spacing-l);
+  box-shadow: var(--shadow-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  color: var(--color-text-white); /* Cor do texto no cabeçalho */
 }
 
-.app-logo {
-  color: white;
-  text-decoration: none;
-  font-size: 1.5em;
-  font-weight: bold;
+.header-admin h1 {
+  margin: 0;
+  color: var(--color-primary); /* Destaque no título do header */
+  font-size: var(--font-size-h3); /* Ajuste de tamanho para o contexto do header */
 }
 
-.app-header nav {
+/* Estilos de layout para a barra de navegação administrativa */
+.navbar-admin {
+  background-color: var(--color-background-darker);
+  padding: var(--spacing-s) var(--spacing-l);
+  border-bottom: var(--border-width-thin) solid var(--border-color-light);
+}
+
+.navbar-admin ul {
+  list-style: none;
   display: flex;
-  gap: 15px;
+  gap: var(--spacing-l); /* Espaço entre os itens da nav */
+  margin: 0;
+  padding: 0;
 }
 
-.nav-link {
-  color: white;
-  text-decoration: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
+.navbar-admin li a {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
 }
 
-.nav-link:hover {
-  background-color: #61dafb;
-  color: #282c34;
+.navbar-admin li a:hover,
+.navbar-admin li a.active {
+  color: var(--color-primary);
 }
 
-.nav-button {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1em;
-  transition: background-color 0.3s ease;
+/* Estilos de layout para a página de dashboard */
+.admin-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-m);
+  margin-top: var(--spacing-l);
 }
 
-.nav-button:hover {
-  background-color: #c82333;
-}
-
-/* Estilos para o Footer (Copie da seção do Footer.tsx) */
-.app-footer {
-  background-color: #282c34;
-  color: white;
-  padding: 20px;
+.dashboard-card {
+  background-color: var(--color-background-light);
+  padding: var(--spacing-l);
+  border-radius: var(--border-radius-m);
+  box-shadow: var(--shadow-medium);
   text-align: center;
-  margin-top: auto;
-  width: 100%;
-  box-sizing: border-box;
 }
 
-/* Estilos para o Button (Copie da seção do Button.tsx) */
-.button {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
+/* Estilos para os statuses de briefing (classes utilitárias de status) */
+.briefing-status {
+  padding: var(--spacing-xxs) var(--spacing-xs);
+  border-radius: var(--border-radius-s);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
 }
 
-.button.primary {
-  background-color: #007bff;
-  color: white;
+.briefing-status.status-open {
+  background-color: var(--color-info-bg-light);
+  color: var(--color-info);
 }
 
-.button.secondary {
-  background-color: #6c757d;
-  color: white;
+.briefing-status.status-in-progress {
+  background-color: var(--color-warning-bg-light);
+  color: var(--color-warning);
 }
 
-.button.danger {
-  background-color: #dc3545;
-  color: white;
+.briefing-status.status-completed {
+  background-color: var(--color-success-bg-light);
+  color: var(--color-success);
 }
 
-.button:hover {
-  opacity: 0.9;
+.briefing-status.status-cancelled {
+  background-color: var(--color-error-bg-light);
+  color: var(--color-error);
 }
 
-/* Estilos para o Input (Copie da seção do Input.tsx) */
-.input-field {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  width: 100%;
-  box-sizing: border-box;
+/* Mensagens de erro e sucesso */
+.error-message {
+  color: var(--color-error);
+  background-color: var(--color-error-bg-light);
+  border: var(--border-width-thin) solid var(--color-error);
+  padding: var(--spacing-s) var(--spacing-m);
+  border-radius: var(--border-radius-s);
+  margin-bottom: var(--spacing-m);
 }
 
-/* Estilos para tabelas (usado em AdminUsersPage, AdminEmployeesPage) */
-table {
+.success-message {
+  color: var(--color-success);
+  background-color: var(--color-success-bg-light);
+  border: var(--border-width-thin) solid var(--color-success);
+  padding: var(--spacing-s) var(--spacing-m);
+  border-radius: var(--border-radius-s);
+  margin-bottom: var(--spacing-m);
+}
+
+/* Estilos para o histórico de conversas na AdminBriefingsPage */
+.briefing-history-chat {
+  max-height: 400px; /* Altura máxima para scroll */
+  overflow-y: auto;
+  border: var(--border-width-thin) solid var(--border-color-light);
+  padding: var(--spacing-s);
+  border-radius: var(--border-radius-s);
+}
+
+.briefing-history-chat div {
+  margin-bottom: var(--spacing-xs);
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-s);
+  max-width: 80%; /* Limita a largura do balão de mensagem */
+}
+
+.briefing-history-chat .message-user { /* Classe para mensagens do usuário */
+    background-color: var(--color-chat-user-bg);
+    margin-left: auto; /* Alinha à direita */
+    color: var(--color-chat-text-dark); /* Texto escuro para fundo claro */
+}
+
+.briefing-history-chat .message-employee { /* Classe para mensagens do funcionário */
+    background-color: var(--color-chat-employee-bg);
+    margin-right: auto; /* Alinha à esquerda */
+    color: var(--color-chat-text-dark); /* Texto escuro para fundo claro */
+}
+
+/* ------------------------------------- */
+/* --- Media Queries (Responsividade) --- */
+/* ------------------------------------- */
+
+/* Pequenos Dispositivos (Mobile - até 768px) */
+@media (max-width: 768px) {
+  .main-content {
+    padding: var(--spacing-m); /* Reduz o padding em telas menores */
+  }
+
+  .header-admin {
+    flex-direction: column; /* Cabeçalho em coluna */
+    align-items: flex-start;
+    padding: var(--spacing-s);
+  }
+
+  .header-admin h1 {
+    font-size: var(--font-size-h4); /* Reduz o título em mobile */
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .navbar-admin ul {
+    flex-direction: column; /* Itens da nav em coluna */
+    gap: var(--spacing-s);
+    align-items: flex-start;
+  }
+
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr; /* Uma coluna em mobile */
+    gap: var(--spacing-m);
+  }
+
+  /* Exemplo para a página de briefings */
+  div[style*="display: flex"] { /* Seleciona o flexbox principal na AdminBriefingsPage */
+    flex-direction: column;
+    gap: var(--spacing-m);
+  }
+
+  div[style*="flex: 1"] { /* Ajusta a largura dos painéis de briefing/histórico */
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
+    flex: none; /* Remove o flex:1 em mobile */
+  }
+
+  .briefing-history-chat div {
+    max-width: 100%; /* Balões de mensagem ocupam mais espaço em mobile */
+  }
 }
 
-th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
+/* Dispositivos Médios (Tablets - 769px a 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main-content {
+    padding: var(--spacing-l);
+  }
+
+  .admin-dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* 2 ou 3 colunas em tablets */
+    gap: var(--spacing-l);
+  }
+  /* Ajustes específicos para tablets */
 }
 
-th {
-    background-color: #f2f2f2;
-}
-
-tr:nth-child(even) {
-    background-color: #f9f9f9;
+/* Dispositivos Grandes (Desktops - a partir de 1025px) */
+/* O padrão já é o de desktop, então ajustes mínimos aqui, se houver */
+@media (min-width: 1025px) {
+  /* Pode ter ajustes finos para telas muito grandes */
 }

@@ -1,5 +1,6 @@
-// src/pages/auth/AdminLoginPage.tsx
-import React, { useState } from 'react';
+// File: frontend/src/pages/auth/AdminLoginPage.tsx
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../hooks/useAdminAuth';
 import { loginAdmin } from '../../api/auth';
@@ -12,9 +13,11 @@ const AdminLoginPage: React.FC = () => {
   const { login, isAuthenticated, userRole } = useAdminAuth();
   const navigate = useNavigate();
 
-  if (isAuthenticated && userRole === 'admin') {
-    navigate('/admin/dashboard', { replace: true });
-  }
+  useEffect(() => {
+    if (isAuthenticated && userRole === 'admin') {
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, userRole, navigate]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -22,13 +25,13 @@ const AdminLoginPage: React.FC = () => {
 
     try {
       const response = await loginAdmin(username, password);
-
       login(response.access_token);
+      navigate('/admin/dashboard'); // ✅ redireciona para a rota semântica correta
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message || "Erro desconhecido ao tentar fazer login.");
+        setError(err.message || 'Erro desconhecido ao tentar fazer login.');
       } else {
-        setError("Erro desconhecido.");
+        setError('Erro desconhecido.');
       }
     }
   };
@@ -37,7 +40,16 @@ const AdminLoginPage: React.FC = () => {
     <div className="App">
       <h1>Login Administrativo</h1>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '300px', margin: '20px auto' }}>
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          maxWidth: '300px',
+          margin: '20px auto',
+        }}
+      >
         <div>
           <label htmlFor="username">Usuário:</label>
           <input

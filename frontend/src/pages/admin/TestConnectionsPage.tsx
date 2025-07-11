@@ -1,4 +1,5 @@
-// src/pages/admin/TestConnectionsPage.tsx
+// File: frontend/src/pages/admin/TestConnectionsPage.tsx
+
 import React, { useState } from 'react';
 import { testAllAiConnections } from '../../api/employees'; // Importa a função de teste
 import '../../App.css'; // Usando o CSS global por enquanto
@@ -14,9 +15,13 @@ const TestConnectionsPage: React.FC = () => {
     setTestResult(null);
     try {
       const result = await testAllAiConnections();
-      setTestResult(result);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao executar o teste de conexões AI.');
+      setTestResult(result as Record<string, unknown>);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Erro ao executar o teste de conexões AI.');
+      }
     } finally {
       setLoading(false);
     }

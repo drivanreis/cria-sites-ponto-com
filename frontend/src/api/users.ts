@@ -1,6 +1,9 @@
-// src/api/users.ts
+// frontend/src/api/users.ts
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// IMPORTAÇÃO CORRETA: Importe o getAuthHeaders do utilitário
+import { getAuthHeaders } from '../utils/getAuthHeaders'; // [cite: 110]
 
 // Interface para um usuário (completa, incluindo campos que podem vir da API)
 export interface User {
@@ -17,28 +20,13 @@ export interface User {
   status: string;
 }
 
-
-// Helper para lidar com a autenticação (token)
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('accessToken');
-  return {
-    'ngrok-skip-browser-warning': 'true',
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }), // Adiciona o token se existir
-  };
-};
-
-// Funções para Usuários Comuns e Admin Users
-// ------------------------------------------
-
 // Obter todos os usuários (Admin)
 export const getAllUsers = async (): Promise<User[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/users/`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders('admin'), // ✅ CORREÇÃO AQUI: Passa 'admin' para obter o token correto
     });
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `Erro ao buscar usuários: ${response.status} ${response.statusText}`);
@@ -55,9 +43,8 @@ export const getUserById = async (userId: string): Promise<User> => {
   try {
     const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders('admin'), // ✅ CORREÇÃO AQUI
     });
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `Erro ao buscar usuário ${userId}: ${response.status} ${response.statusText}`);
@@ -74,10 +61,9 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
   try {
     const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders('admin'), // ✅ CORREÇÃO AQUI
       body: JSON.stringify(userData),
     });
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `Erro ao atualizar usuário ${userId}: ${response.status} ${response.statusText}`);
@@ -94,14 +80,12 @@ export const deleteUser = async (userId: string): Promise<{ message: string }> =
   try {
     const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders('admin'), // ✅ CORREÇÃO AQUI
     });
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `Erro ao deletar usuário ${userId}: ${response.status} ${response.statusText}`);
     }
-    // A API pode retornar um corpo vazio ou uma mensagem, ajuste conforme necessário
     return { message: `Usuário ${userId} deletado com sucesso.` };
   } catch (error) {
     console.error(`Erro em deleteUser (${userId}):`, error);
@@ -114,10 +98,9 @@ export const createAdminUser = async (userData: Omit<User, 'id' | 'is_active' | 
   try {
     const response = await fetch(`${API_BASE_URL}/admin_users/`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders('admin'), // ✅ CORREÇÃO AQUI
       body: JSON.stringify(userData),
     });
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `Erro ao criar admin user: ${response.status} ${response.statusText}`);
@@ -134,9 +117,8 @@ export const getAllAdminUsers = async (): Promise<User[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin_users/`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders('admin'), // ✅ CORREÇÃO AQUI
     });
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `Erro ao buscar admin users: ${response.status} ${response.statusText}`);
@@ -153,9 +135,8 @@ export const getOwnAdminProfile = async (): Promise<User> => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin_users/me`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders('admin'), // ✅ CORREÇÃO AQUI
     });
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `Erro ao buscar perfil admin: ${response.status} ${response.statusText}`);
@@ -172,9 +153,8 @@ export const getAdminUserById = async (adminUserId: string): Promise<User> => {
   try {
     const response = await fetch(`${API_BASE_URL}/admin_users/${adminUserId}`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders('admin'), // ✅ CORREÇÃO AQUI
     });
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `Erro ao buscar admin user ${adminUserId}: ${response.status} ${response.statusText}`);
@@ -191,10 +171,9 @@ export const updateAdminUser = async (adminUserId: string, userData: Partial<Use
   try {
     const response = await fetch(`${API_BASE_URL}/admin_users/${adminUserId}`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders('admin'), // ✅ CORREÇÃO AQUI
       body: JSON.stringify(userData),
     });
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `Erro ao atualizar admin user ${adminUserId}: ${response.status} ${response.statusText}`);
@@ -211,9 +190,8 @@ export const deleteAdminUser = async (adminUserId: string): Promise<{ message: s
   try {
     const response = await fetch(`${API_BASE_URL}/admin_users/${adminUserId}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders('admin'), // ✅ CORREÇÃO AQUI
     });
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `Erro ao deletar admin user ${adminUserId}: ${response.status} ${response.statusText}`);
@@ -229,9 +207,8 @@ export const deleteAdminUser = async (adminUserId: string): Promise<{ message: s
 export const getUserProfile = async (): Promise<User> => {
   const response = await fetch(`${API_BASE_URL}/users/me`, {
     method: 'GET',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('user'), // ✅ CORREÇÃO AQUI: Passa 'user' para obter o token correto
   });
-
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.detail || 'Erro ao buscar perfil');
@@ -246,10 +223,9 @@ export const updateUserProfile = async (
 ): Promise<User> => {
   const response = await fetch(`${API_BASE_URL}/users/me`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders('user'), // ✅ CORREÇÃO AQUI
     body: JSON.stringify(data),
   });
-
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.detail || 'Erro ao atualizar perfil');

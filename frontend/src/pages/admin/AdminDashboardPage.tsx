@@ -1,11 +1,11 @@
-// src/pages/admin/AdminDashboardPage.tsx
+// File: frontend/src/pages/admin/AdminDashboardPage.tsx
 import React from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAdminAuth } from '../../hooks/useAdminAuth'; // Alterado para useAdminAuth
 import { Link } from 'react-router-dom';
 import '../../App.css'; // Usando o CSS global por enquanto
 
 const AdminDashboardPage: React.FC = () => {
-  const { userRole, logout } = useAuth(); // Obter o userRole para exibição
+  const { userRole, logout } = useAdminAuth(); // Alterado para useAdminAuth para obter o userRole para exibição
 
   return (
     <div className="App">
@@ -15,8 +15,10 @@ const AdminDashboardPage: React.FC = () => {
       <nav>
         <h2>Gerenciamento</h2>
         <ul>
+          <li><Link to="/admin/admins">Gerenciar Administradores</Link></li>
           <li><Link to="/admin/users">Gerenciar Usuários</Link></li>
           <li><Link to="/admin/employees">Gerenciar Funcionários</Link></li>
+          <li><Link to="/admin/briefings">Gerenciar Briefings</Link></li>
           <li><Link to="/admin/test-connections">Testar Conexões AI</Link></li>
           {/* Adicione mais links conforme necessário */}
         </ul>

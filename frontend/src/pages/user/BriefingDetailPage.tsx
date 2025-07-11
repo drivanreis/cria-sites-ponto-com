@@ -1,4 +1,4 @@
-// frontend/src/pages/user/BriefingDetailPage.tsx
+// File: frontend/src/pages/user/BriefingDetailPage.tsx
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';

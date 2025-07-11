@@ -1,4 +1,5 @@
-// src/pages/auth/UserLoginPage.tsx
+// File: frontend/src/pages/auth/UserLoginPage.tsx
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';

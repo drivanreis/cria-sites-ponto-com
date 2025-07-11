@@ -1,68 +1,205 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/* frontend/src/index.css */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* 1. Reset Básico (Minimalista) */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}
+
+p, h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: break-word;
+}
+
+#root, #__next { /* Ajuste conforme o ID do seu elemento root React */
+  isolation: isolate;
+  min-height: 100vh; /* Garante que o background preencha a tela */
+}
+
+/* 2. Startup: Variáveis de Cores, Fontes, Tamanhos, Sombras, Bordas (Tema Dark) */
+:root {
+  /* Cores Básicas */
+  --color-absolute-white: #FFFFFF; /* Branco Puro */
+  --color-absolute-black: #000000; /* Preto Puro */
+
+  /* Cores de Fundo (Tema Dark) */
+  --color-background-deep: #1A1A1A;     /* Fundo principal mais escuro */
+  --color-background-light: #2C2C2C;    /* Fundo para elementos/cards, mais claro que o deep */
+  --color-background-accent: #3A3A3A;   /* Fundo para elementos de destaque/interativos */
+  --color-background-darker: #0D0D0D;   /* Fundo para navbars/footers, bem escuro */
+
+  /* Cores de Marca/Interatividade */
+  --color-primary: #8E2DE2;             /* Roxo vibrante (botões, links principais, destaque) */
+  --color-primary-dark: #6A1FB8;        /* Roxo um pouco mais escuro para hover/ativo */
+  --color-secondary: #4A00E0;           /* Azul violeta (complementar, links secundários) */
+  --color-secondary-dark: #3200A0;      /* Azul violeta mais escuro para hover/ativo */
+
+  /* Cores de Texto */
+  --color-text-primary: #E0E0E0;         /* Texto principal (cinza claro) */
+  --color-text-secondary: #B0B0B0;       /* Texto secundário/descrições (cinza médio) */
+  --color-text-placeholder: #777777;    /* Texto de placeholder/ajuda (cinza escuro) */
+  --color-text-white: var(--color-absolute-white); /* Texto branco para títulos/elementos específicos */
+
+  /* Cores de Feedback/Status */
+  --color-success: #28A745;             /* Verde para sucesso */
+  --color-success-bg-light: rgba(40, 167, 69, 0.2);
+  --color-error: #DC3545;               /* Vermelho para erro */
+  --color-error-bg-light: rgba(220, 53, 69, 0.2);
+  --color-warning: #FFC107;             /* Amarelo para aviso */
+  --color-warning-bg-light: rgba(255, 193, 7, 0.2);
+  --color-info: #007bff;                /* Azul para informação */
+  --color-info-bg-light: rgba(0, 123, 255, 0.2);
+
+  /* Cores de Mensagens de Chat (customizáveis) */
+  --color-chat-user-bg: #d4edda;        /* Fundo de balão de mensagem do usuário (verde suave) */
+  --color-chat-employee-bg: #f8d7da;    /* Fundo de balão de mensagem do funcionário (vermelho suave) */
+  --color-chat-text-dark: #333333;      /* Cor de texto para balões de chat (se o fundo for claro) */
+
+
+  /* Fontes */
+  --font-family-primary: 'Roboto', sans-serif;   /* Fonte principal para títulos e corpo */
+  --font-family-secondary: 'Open Sans', sans-serif; /* Fonte complementar para seções específicas */
+  --font-family-monospace: 'Fira Code', monospace; /* Fonte para código/logs */
+
+  /* Tamanhos de Fonte */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-small: 0.875rem; /* 14px */
+  --font-size-large: 1.125rem; /* 18px */
+
+  --font-size-h1: 2.5rem;
+  --font-size-h2: 2rem;
+  --font-size-h3: 1.75rem;
+  --font-size-h4: 1.5rem;
+  --font-size-h5: 1.25rem;
+  --font-size-h6: 1rem;
+
+  /* Pesos de Fonte */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* Espaçamentos (Sistema de Espaçamento Modular) */
+  --spacing-xxs: 0.25rem; /* 4px */
+  --spacing-xs: 0.5rem;   /* 8px */
+  --spacing-s: 1rem;      /* 16px */
+  --spacing-m: 1.5rem;    /* 24px */
+  --spacing-l: 2rem;      /* 32px */
+  --spacing-xl: 3rem;     /* 48px */
+  --spacing-xxl: 4rem;    /* 64px */
+
+  /* Bordas e Raio de Borda */
+  --border-radius-s: 4px;
+  --border-radius-m: 8px;
+  --border-radius-l: 12px;
+  --border-width-thin: 1px;
+  --border-color-light: rgba(255, 255, 255, 0.1); /* Borda transparente clara */
+  --border-color-medium: rgba(255, 255, 255, 0.2); /* Borda transparente média */
+
+  /* Sombras */
+  --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.2);     /* Sombra sutil */
+  --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.3);    /* Sombra padrão para cards */
+  --shadow-strong: 0 8px 16px rgba(0, 0, 0, 0.4);   /* Sombra forte para pop-ups/modais */
+
+  /* Transições Padrão */
+  --transition-speed-fast: 0.15s;
+  --transition-speed-normal: 0.3s;
+  --transition-speed-slow: 0.5s;
+  --transition-ease: ease-in-out;
+}
+
+/* 3. Estilos Base para Elementos HTML (Usando Variáveis) */
+body {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base);
+  background-color: var(--color-background-deep);
+  color: var(--color-text-primary);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-speed-fast) var(--transition-ease);
+}
+
+a:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--color-primary);
+  color: var(--color-text-white);
+  border: none;
+  padding: var(--spacing-s) var(--spacing-m);
+  border-radius: var(--border-radius-s);
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: background-color var(--transition-speed-normal) var(--transition-ease);
+  font-weight: var(--font-weight-medium);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+button:hover {
+  background-color: var(--color-primary-dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-text-white); /* Títulos em branco mais puro */
+  font-family: var(--font-family-primary);
+  font-weight: var(--font-weight-bold);
+  margin-top: var(--spacing-l);
+  margin-bottom: var(--spacing-s);
+  line-height: 1.2;
+}
+
+h1 { font-size: var(--font-size-h1); }
+h2 { font-size: var(--font-size-h2); }
+h3 { font-size: var(--font-size-h3); }
+h4 { font-size: var(--font-size-h4); }
+h5 { font-size: var(--font-size-h5); }
+h6 { font-size: var(--font-size-h6); }
+
+p {
+  margin-bottom: var(--spacing-s);
+  line-height: 1.6;
+  color: var(--color-text-primary);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  background-color: var(--color-background-light);
+  color: var(--color-text-primary);
+  border: var(--border-width-thin) solid var(--border-color-medium);
+  border-radius: var(--border-radius-s);
+  padding: var(--spacing-xs) var(--spacing-s);
+  transition: border-color var(--transition-speed-fast) var(--transition-ease);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(142, 45, 226, 0.3); /* Sombra de foco com a cor primária */
 }

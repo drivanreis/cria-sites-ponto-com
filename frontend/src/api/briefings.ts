@@ -2,7 +2,8 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-type BriefingContentValue = string | number | boolean | null | BriefingContentValue[] | { [key: string]: BriefingContentValue };
+type BriefingContentValue = string |
+  number | boolean | null | BriefingContentValue[] | { [key: string]: BriefingContentValue };
 
 export interface Briefing {
   id: string;
@@ -25,23 +26,17 @@ export interface BriefingWithHistory extends Briefing {
   conversation_history: BriefingChatMessage[];
 }
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('accessToken');
-  return {
-    'ngrok-skip-browser-warning': 'true',
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
+// ✅ IMPORTE A FUNÇÃO getAuthHeaders DO MÓDULO DE UTILITÁRIOS:
+import { getAuthHeaders } from '../utils/getAuthHeaders';
 
 // Criar novo briefing (POST /briefings/)
 export const createBriefing = async (briefingData: Partial<Briefing>): Promise<Briefing> => {
   const response = await fetch(`${API_BASE_URL}/briefings/`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    // ✅ CORREÇÃO AQUI: Use o getAuthHeaders global com o papel 'admin'
+    headers: getAuthHeaders('admin'),
     body: JSON.stringify(briefingData),
   });
-
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.detail || 'Erro ao criar briefing.');
@@ -54,9 +49,9 @@ export const createBriefing = async (briefingData: Partial<Briefing>): Promise<B
 export const getBriefings = async (): Promise<Briefing[]> => {
   const response = await fetch(`${API_BASE_URL}/briefings/`, {
     method: 'GET',
-    headers: getAuthHeaders(),
+    // ✅ CORREÇÃO AQUI: Use o getAuthHeaders global com o papel 'admin'
+    headers: getAuthHeaders('admin'),
   });
-
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.detail || 'Erro ao listar briefings.');
@@ -69,9 +64,9 @@ export const getBriefings = async (): Promise<Briefing[]> => {
 export const getBriefingById = async (id: string): Promise<BriefingWithHistory> => {
   const response = await fetch(`${API_BASE_URL}/briefings/${id}`, {
     method: 'GET',
-    headers: getAuthHeaders(),
+    // ✅ CORREÇÃO AQUI: Use o getAuthHeaders global com o papel 'admin'
+    headers: getAuthHeaders('admin'),
   });
-
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.detail || 'Erro ao buscar briefing.');
@@ -84,10 +79,10 @@ export const getBriefingById = async (id: string): Promise<BriefingWithHistory> 
 export const updateBriefing = async (id: string, data: Partial<Briefing>): Promise<Briefing> => {
   const response = await fetch(`${API_BASE_URL}/briefings/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
+    // ✅ CORREÇÃO AQUI: Use o getAuthHeaders global com o papel 'admin'
+    headers: getAuthHeaders('admin'),
     body: JSON.stringify(data),
   });
-
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.detail || 'Erro ao atualizar briefing.');
@@ -100,9 +95,9 @@ export const updateBriefing = async (id: string, data: Partial<Briefing>): Promi
 export const deleteBriefing = async (id: string): Promise<{ message: string }> => {
   const response = await fetch(`${API_BASE_URL}/briefings/${id}`, {
     method: 'DELETE',
-    headers: getAuthHeaders(),
+    // ✅ CORREÇÃO AQUI: Use o getAuthHeaders global com o papel 'admin'
+    headers: getAuthHeaders('admin'),
   });
-
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.detail || 'Erro ao deletar briefing.');
@@ -119,10 +114,10 @@ export const chatWithEmployee = async (
 ): Promise<BriefingWithHistory> => {
   const response = await fetch(`${API_BASE_URL}/briefings/${briefingId}/chat/${employeeName}`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    // ✅ CORREÇÃO AQUI: Use o getAuthHeaders global com o papel 'admin'
+    headers: getAuthHeaders('admin'),
     body: JSON.stringify({ user_message: message, employee_name: employeeName }),
   });
-
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.detail || 'Erro ao enviar mensagem.');
@@ -135,9 +130,9 @@ export const chatWithEmployee = async (
 export const compileBriefing = async (briefingId: string): Promise<Record<string, BriefingContentValue>> => {
   const response = await fetch(`${API_BASE_URL}/briefings/${briefingId}/compile`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    // ✅ CORREÇÃO AQUI: Use o getAuthHeaders global com o papel 'admin'
+    headers: getAuthHeaders('admin'),
   });
-
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.detail || 'Erro ao compilar briefing.');

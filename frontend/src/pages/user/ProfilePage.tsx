@@ -1,4 +1,4 @@
-// frontend/src/pages/user/ProfilePage.tsx
+// File: frontend/src/pages/user/ProfilePage.tsx
 
 import React, { useEffect, useState } from 'react';
 import {

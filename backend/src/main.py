@@ -1,4 +1,4 @@
-# File: backend/src/main.py (após as modificações)
+# File: backend/src/main.py
 
 from fastapi import FastAPI, Depends, HTTPException, status
 import uvicorn
